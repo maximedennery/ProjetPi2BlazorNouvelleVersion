@@ -1,0 +1,164 @@
+@page "/ModuleCalcul"  
+@inject HttpClient Http
+@using OfficeOpenXml;
+@using System;
+@using System.Diagnostics;
+@using System.Collections.Generic;
+@using System.Text;
+@using System.IO;
+@using Newtonsoft.Json;
+@using System.Web;
+@using Accord.Math;
+@using Accord.Statistics;
+
+
+<h1>Module Calcul</h1>  
+
+
+@code {
+
+    public string[][] CsvToMatrixString(string fileName)
+    {
+        List<string[]> data = new List<string[]>();
+
+        using (StreamReader sr = new StreamReader(fileName))
+        {
+            bool headerRow = true;
+            string line;
+
+            while ((line = sr.ReadLine()) != null)
+            {
+                if (headerRow)
+                { 
+                    headerRow = false;
+                }
+                else
+                {
+                    string[] split = line.Split(new char[] { ',' });
+
+                    data.Add(split);
+                }
+            }
+            return data.ToArray();
+        }
+    }
+
+    public double[][] MatrixStringToDouble(string[][] data)
+    {
+        double[][] dataDouble = new double[data.GetLength(0)][];
+        for (int i = 0; i < data.GetLength(0); i++)
+        {
+            for (int j = 0; j < data.GetLength(1); j++)
+            {
+                dataDouble[i][j] = Convert.ToDouble(data[i][j]);
+            }
+        }
+        return dataDouble;
+    }
+
+    public double[] Moyennes(double[] SigmaX, int NombrePoints)
+    {
+        double[] moyennes = new double[SigmaX.Length];
+        for (int i=0;i< SigmaX.Length; i++)
+        {
+            moyennes[i] = SigmaX[i] / NombrePoints;
+        }
+        return moyennes;
+    }
+
+    public double[] Variances(double[][] SigmaXY, double[] SigmaX, int NombrePoints)
+    {
+        double[] variances = new double[SigmaX.Length];
+        double[][] covariances = covarianceMatrix(SigmaXY, SigmaX, NombrePoints);
+
+        for (int i = 0; i < SigmaX.Length; i++)
+        {
+            variances[i] = covariances[i][i];
+        }
+
+        return variances;
+    }
+
+    public static double[][] Addition(double[][] dataDouble1, double[][] dataDouble2)
+    {
+        double[][] addition = new double[dataDouble1.GetLength(0)][];
+        for (int i = 0; i < addition.GetLength(0); i++)
+        {
+            addition[i] = new double[dataDouble1.GetLength(0)];
+            for (int j = 0; j < addition.GetLength(0); j++)
+            {
+                addition[i][j] = dataDouble1[i][j] + dataDouble2[i][j];
+            }
+        }
+        return addition;
+    }
+
+    public static double[] AdditionVecteurs(double[] vect1, double[] vect2)
+    {
+        double[] addition = new double[vect1.Length];
+        for (int i = 0; i < addition.Length; i++)
+        {
+            addition[i] = vect1[i] + vect2[i];
+        }
+        return addition;
+    }
+
+    public static double[][] MultiplicationMatrix(double[][] matA, double[][] matB)
+    {
+        double[][] res = new double[matA.GetLength(0)][];
+        double temp = 0;
+
+        for (int i = 0; i < matA.GetLength(0); i++)
+        {
+            res[i] = new double[matB[0].GetLength(0)];
+            for (int j = 0; j < matB[0].GetLength(0); j++)
+            {
+                temp = 0;
+                for (int k = 0; k < matA[0].GetLength(0); k++)
+                {
+                    temp += matA[i][k] * matB[k][j];
+                }
+                res[i][j] = temp;
+            }
+        }
+        return res;
+    }
+
+    public static double[][] TransposeMatrix(double[][] matA)
+    {
+        double[][] res = new double[matA[0].GetLength(0)][];
+
+        for (int i = 0; i < matA[0].GetLength(0); i++)
+        {
+            res[i] = new double[matA.GetLength(0)];
+            for (int j = 0; j < matA.GetLength(0); j++)
+            {
+                res[i][j] = matA[j][i];
+            }
+        }
+        return res;
+    }
+
+
+    public static double[][] covarianceMatrix(double[][] sigmaXY, double[] sigmaX, int n)
+    {
+        int longueur0 = sigmaXY.GetLength(0);
+        int longueur1 = sigmaXY[0].GetLength(0);
+        double[][] covariance = new double[longueur0][];
+
+        for (int i=0;i< longueur0; i++)
+        {
+            covariance[i] = new double[longueur1];
+
+            for (int j = 0; j < longueur1; j++)
+            {
+                covariance[i][j] = (sigmaXY[i][j] / n) - (sigmaX[i]*sigmaX[j])/ (n * n);
+
+            }
+        }
+
+        return covariance;
+    }
+    
+}
+

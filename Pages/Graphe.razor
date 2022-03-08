@@ -1,0 +1,111 @@
+@page "/Graphe"
+@inject HttpClient Http
+@using OfficeOpenXml;
+@using System;
+@using System.Data;
+@using System.Diagnostics;
+@using System.Collections.Generic;
+@using System.Text;
+@using System.IO;
+@using Newtonsoft.Json;
+@using System.Web;
+@using Accord.Math;
+@using Accord.Statistics;
+@using Plotly.Blazor.Traces.ScatterLib
+
+
+<body>
+    @if (Indicateurs.matrixListStatic == null || Indicateurs.matrixListStatic[0] == null)
+    {
+        <p><em>Loading...</em></p> }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name of Indicators</th>
+                    <th>BetaSR</th>
+                    <th>Selection</th>
+                    <th>BetaMR</th>
+                    <th>Selection</th>
+
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (Indicateurs.Indicateur indicateur in Indicateurs.matrixListStatic[0].Indicateurs)
+                {
+                    // On check si l'indicateur a été coché ou pas
+                    @if (indicateur.IsChecked)
+                    {
+                        <tr>
+                            <td>@indicateur.Nom</td>
+
+                            <td>@(Math.Round(indicateur.BetaValueSR * 10000) / 10000)</td>
+
+                            <td>
+                                <input type="checkbox" id="checked" name="checked" @onchange="eventArgs => { PlotSR(indicateur, eventArgs.Value); }">
+                            </td>
+
+                            <td>@(Math.Round(indicateur.BetaValueMR * 10000) / 10000)</td>
+
+                            <td>
+                                <input type="checkbox" id="checked" name="checked" @onchange="eventArgs => { PlotMR(indicateur, eventArgs.Value); }">
+                            </td>
+                        </tr>
+                    }}
+            </tbody>
+        </table>
+    }
+
+    <PlotlyChart @bind-Config="config" @bind-Layout="layout" @bind-Data="data" @ref="chart" />
+
+</body>
+
+@code { 
+    PlotlyChart chart;
+    Config config = new Config();
+    Layout layout = new Layout();
+    // Using of the interface IList is important for the event callback!
+    IList<ITrace> data = new List<ITrace>
+    {
+        new Scatter
+        {
+            Name = "Exemple de graphique",
+            Mode = ModeFlag.Lines | ModeFlag.Markers,
+            X = new List<object>{"Point 1", "Point 2", "Point 3"},
+            Y = new List<object>{1,2,3}, 
+            Text="un point avec une description", 
+            ShowLegend=true
+        }
+    };
+
+
+    public void PlotSR(Indicateurs.Indicateur indicateurs, object e)
+    {
+
+        if ((bool)e)
+        {
+
+
+
+        }
+        else
+        {
+
+        }
+
+    }
+
+    public void PlotMR(Indicateurs.Indicateur indicateurs, object e)
+    {
+        if ((bool)e)
+        {
+
+        }
+        else
+        {
+
+        }
+    }
+
+    }
