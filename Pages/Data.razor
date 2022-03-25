@@ -79,8 +79,8 @@ else
 
 @code { 
 
-    private Indicateurs.MatriceR matrice;
-    private List<Indicateurs.MatriceR> matrixList = new List<Indicateurs.MatriceR>();
+    private MatriceR matrice;
+    private List<MatriceR> matrixList = new List<MatriceR>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -91,17 +91,17 @@ else
         temp = await Http.GetStringAsync("sample-data/201901.csv");
 
 
-        Indicateurs.MatriceR dataImport = Indicateurs.DataImport(temp);
+        MatriceR dataImport = Indicateurs.DataImport(temp);
         matrixList.Add(dataImport);
 
         double[][] matrixSum = dataImport.SigmaXY;
         double[] vectorSum = dataImport.SigmaX;
         int pointSum = dataImport.NombrePoints;
         listCovariances.Add(ModuleCalcul.covarianceMatrix(matrixSum, vectorSum, matrixSum.GetLength(0)));
-        List<Indicateurs.Indicateur> indicateurs = dataImport.Indicateurs;
+        List<Indicateur> indicateurs = dataImport.Indicateurs;
 
 
-        Indicateurs.MatriceR mat;
+        MatriceR mat;
 
 
         for (int i = 2; i <= 12; i++)
@@ -125,7 +125,7 @@ else
         listCovariances.Add(ModuleCalcul.covarianceMatrix(matrixSum, vectorSum, matrixSum.GetLength(0)));
 
 
-        matrice = new Indicateurs.MatriceR
+        matrice = new MatriceR
         {
             Indicateurs = indicateurs,
             SigmaXY = listCovariances.Last(),

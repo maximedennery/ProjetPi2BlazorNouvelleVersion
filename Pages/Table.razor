@@ -1,0 +1,232 @@
+@page "/"
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@using System;
+@using System.Diagnostics;
+@using System.Collections.Generic;
+@using System.Text;
+@using System.IO;
+@using System.Globalization;
+@using Accord.Math;
+
+
+
+@if (canCompute)
+{
+<table class="table">
+    <thead>
+        <tr>
+            <th>Variance de Y</th>
+            <th>Variance expliquee</th>
+            <th>R squared</th>
+            <th>adjusted R squared</th>
+
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>@(Math.Round(varY * 10000) / 10000)</td>
+            <td>@(Math.Round(varExpliquee * 10000) / 10000)</td>
+            <td>@(Math.Round(RSquared * 10000) / 10000)</td>
+            <td>@(Math.Round(ExplainedRSquared * 10000) / 10000)</td>
+        </tr>
+    </tbody>
+</table>
+}
+
+else
+{
+    <h1>Main Page</h1>
+    <h2>Welcome on the main page!</h2>
+}
+
+@code {
+    private double[][] matrThirteen;
+    private List<MatriceR> matrixList;
+    List<double[][]> listCovariances;
+
+    public static double[][] matrThirteenStatic;
+    public static List<MatriceR> matrixListStatic;
+    public static List<double[][]> listCovariancesStatic;
+
+    // Variable qui indiquera si on est en mesure de faire les calculs ou pas
+    private bool canCompute = false;
+
+    private double varY = 0.0;
+    private double varExpliquee = 0.0;
+    private double RSquared;
+    private double ExplainedRSquared;
+
+
+    /// <summary>
+    /// Méthode qui s'exécute au lancement de la page. Elle permet d'initialiser les variables statiques contenant les
+    /// informations de la 13ème matrice, de la liste des matrices (par mois) et de la liste des matrices de covariance
+    /// </summary>
+    /// <returns></returns>
+    protected override async Task OnInitializedAsync()
+    {
+        // On ne rentre dans ce if que lors de la toute première exécution du code. Cela permet d'éviter de refaire plusieurs
+        // fois les mêmes calculs et évite le reset des data lors d'un changement de page
+        if (NavMenu.firstTime)
+        {
+            matrixList = new List<MatriceR>();
+            listCovariances = new List<double[][]>();
+            string num, temp;
+
+            temp = await Http.GetStringAsync("sample-data/201901.csv");
+
+
+            MatriceR dataImport = Indicateurs.DataImport(temp);
+            matrixList.Add(dataImport);
+
+
+            double[][] matrixSum = dataImport.SigmaXY;
+            double[] vectorSum = dataImport.SigmaX;
+            int pointSum = dataImport.NombrePoints;
+
+
+            listCovariances.Add(ModuleCalcul.covarianceMatrix(matrixSum, vectorSum, matrixSum.GetLength(0)));
+
+
+            MatriceR mat;
+
+
+            for (int i = 2; i <= 12; i++)
+            {
+                num = "";
+                if (i < 10) num = "0";
+
+                temp = await Http.GetStringAsync("sample-data/2019" + num + i.ToString() + ".csv");
+                mat = Indicateurs.DataImport(temp);
+                matrixList.Add(mat);
+                pointSum += mat.NombrePoints;
+
+                matrixSum = ModuleCalcul.Addition(matrixSum, mat.SigmaXY);
+                vectorSum = ModuleCalcul.AdditionVecteurs(vectorSum, mat.SigmaX);
+
+                listCovariances.Add(ModuleCalcul.covarianceMatrix(mat.SigmaXY, mat.SigmaX, mat.SigmaXY.GetLength(0)));
+            }
+
+            listCovariances.Add(ModuleCalcul.covarianceMatrix(matrixSum, vectorSum, matrixSum.GetLength(0)));
+            matrThirteen = listCovariances.Last();
+
+
+            List<Indicateur> indicateurs = new List<Indicateur>();
+
+            for (int i = 0; i < matrixList[0].Indicateurs.Count; i++)
+            {
+                indicateurs.Add(new Indicateur
+                {
+                    Nom = matrixList[i].Indicateurs[i].Nom,
+                    IsChecked = false,
+                    Moyenne = vectorSum[i] / pointSum,
+                    Variance = matrThirteen[i][i],
+                    Coefficient = 0.0,
+                    BetaValueMR = 0.0,
+                    BetaValueSR = 0.0,
+                    VarMR = 0.0,
+                    VarSR = 0.0
+                });
+            }
+
+
+            matrixList.Add(new MatriceR
+            {
+                Indicateurs = indicateurs,
+                SigmaXY = matrixSum,
+                SigmaX = vectorSum,
+                Covariance = matrThirteen,
+                NombrePoints = pointSum
+            });
+
+
+
+            NavMenu.firstTime = false;
+
+            matrThirteenStatic = this.matrThirteen;
+            matrixListStatic = this.matrixList;
+            listCovariancesStatic = this.listCovariances;
+        }
+
+        // On vérifie qu'on a au moins un indicateur coché et qu'au moins un coefficient a été renseigné. Si ces deux
+        // conditions ne sont pas vérifiées, alors on ne peut pas procéder aux calculs de variance de Y et de
+        // variance expliquée.
+        canCompute = matrixListStatic[0].Indicateurs.Any(x => x.IsChecked) &&
+            Table.matrixListStatic[0].Indicateurs.Any(x => x.Coefficient != 0.0);
+
+
+        if (canCompute) { Compute(); }
+    }
+
+
+    private void Compute()
+    {
+        // Ces deux listes nous aideront à calculer les variances. Les éléments sont des listes de type Object, qui
+        // sont toutes de longueur égale à 2. Le premier élément est de type Indicateur et représente l' indicateur
+        // sélectionné en tant que X ou que Y (en fonction des cas). Le second élément est l'indice de cet
+        // indicateur, que l'on réutilisera pour trouver la covariance des indicateurs deux à deux (à l'aide de la
+        // variable listCovariancesStatic).
+        List<object[]> XSelected = new List<object[]>();
+        List<object[]> YSelected = new List<object[]>();
+
+        // on initialise les variances (variance des Y et variance expliquée)
+        varY = 0.0;
+        varExpliquee = 0.0;
+
+        // La matrice agregée est la dernière MatriceR de matrixListStatic
+        MatriceR matriceAgregee = matrixListStatic.Last();
+
+        for (int i = 0; i < matriceAgregee.Indicateurs.Count; i++)
+        {
+            if (matriceAgregee.Indicateurs[i].IsChecked)
+            {
+                XSelected.Add(new object[] { matriceAgregee.Indicateurs[i], i });
+
+                // on rajoute les a^2 * VAR(Xi)
+                varExpliquee += Math.Pow(matriceAgregee.Indicateurs[i].BetaValueMR, 2) * matriceAgregee.Indicateurs[i].VarMR;
+            }
+
+            else if (matriceAgregee.Indicateurs[i].Coefficient != 0.0)
+            {
+                YSelected.Add(new object[] { matriceAgregee.Indicateurs[i], i });
+
+                // on rajoute les a^2 * VAR(Yi)
+                varY += Math.Pow(matriceAgregee.Indicateurs[i].Coefficient, 2) * matriceAgregee.Indicateurs[i].Variance;
+            }
+        }
+
+
+        for (int i = 0; i < XSelected.Count - 1; i++)
+        {
+            Indicateur indI = (Indicateur)XSelected[i][0];
+            for (int j = i; j < XSelected.Count; j++)
+            {
+
+                Indicateur indJ = (Indicateur)XSelected[j][0];
+
+                // on rajoute les 2 * a * b * Cov(Xi, Xj)
+                varExpliquee += 2 * matrThirteenStatic[(int)XSelected[i][1]][(int)XSelected[j][1]] * indI.BetaValueMR * indJ.BetaValueMR;
+            }
+        }
+
+        for (int i = 0; i < YSelected.Count - 1; i++)
+        {
+            Indicateur indI = (Indicateur)YSelected[i][0];
+            for (int j = i; j < YSelected.Count; j++)
+            {
+
+                Indicateur indJ = (Indicateur)YSelected[j][0];
+
+                // on rajoute les 2 * a * b * Cov(Yi, Yj)
+                varY += 2 * matrThirteenStatic[(int)YSelected[i][1]][(int)YSelected[j][1]] * indI.Coefficient * indJ.Coefficient;
+
+            }
+        }
+
+        RSquared = varY / varExpliquee;
+
+        ExplainedRSquared = 1 - (1 - RSquared) * (matriceAgregee.NombrePoints - 1) /
+            (matriceAgregee.NombrePoints - XSelected.Count - 1);
+
+    }
+}

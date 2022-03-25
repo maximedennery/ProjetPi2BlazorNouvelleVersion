@@ -12,12 +12,11 @@
 
 <h1>Indicateurs</h1>
 
-@if (matrice == null)
+@if (Table.matrixListStatic[0] == null)
 {
     <p><em>Loading...</em></p>
 }
 else
-
 {
     //On a le boutton Proceed qui permet d'avoir les vecteurs X et Y
     <button @onclick="@ProceedButton">Proceed</button>
@@ -40,7 +39,7 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var indicateur in matrixListStatic[0].Indicateurs)
+            @foreach (var indicateur in Table.matrixListStatic.Last().Indicateurs)
             {
                 // On check si la valeur du coefficient est égale à 0, auquel cas on désactive la checkbox et l'indicateur a la propriété IsChecked à false
                 @if (Convert.ToDouble(indicateur.Coefficient) != 0.0) { indicateur.IsChecked = false; checkIsDisable = true; isChecked = false; }
@@ -75,100 +74,16 @@ else
             }
         </tbody>
     </table>
-
-    <table class="table">
-        <tbody>
-            <tr>
-                @foreach (var item in matrice.Indicateurs)
-                {
-                    if (item.IsChecked)
-                    {
-                        <td>@item.Nom</td>
-                    }
-                }
-            </tr>
-        </tbody>
-    </table>
-
-
-
-}
+})
 
 @code {
-    private MatriceR matrice;
     private MatriceR sousMatrice;
-    private double[][] matrThirteen;
-    private List<MatriceR> matrixList;
-
-
-    public static double[][] matrThirteenStatic;
-    public static List<MatriceR> matrixListStatic;
-    List<double[][]> listCovariances;
-
 
     private string value;
     private double fullNumber { get; set; }
     private bool checkIsDisable { get; set; }
     private bool isChecked { get; set; }
 
-
-
-
-
-
-    protected override async Task OnInitializedAsync()
-    {
-        string content = await Http.GetStringAsync("sample-data/201901.csv");
-        matrice = DataImport(content);
-
-
-        if (NavMenu.firstTime)
-        {
-            matrixList = new List<MatriceR>();
-            listCovariances = new List<double[][]>();
-            string num, temp;
-
-            temp = await Http.GetStringAsync("sample-data/201901.csv");
-
-
-            MatriceR dataImport = DataImport(temp);
-            matrixList.Add(dataImport);
-
-
-            double[][] matrixSum = dataImport.SigmaXY;
-            double[] vectorSum = dataImport.SigmaX;
-            int pointSum = dataImport.NombrePoints;
-            listCovariances.Add(ModuleCalcul.covarianceMatrix(matrixSum, vectorSum, matrixSum.GetLength(0)));
-            List<Indicateurs.Indicateur> indicateurs = dataImport.Indicateurs;
-
-            Indicateurs.MatriceR mat;
-
-
-            for (int i = 2; i <= 12; i++)
-            {
-                num = "";
-                if (i < 10) num = "0";
-
-                temp = await Http.GetStringAsync("sample-data/2019" + num + i.ToString() + ".csv");
-                mat = Indicateurs.DataImport(temp);
-                matrixList.Add(mat);
-
-                matrixSum = ModuleCalcul.Addition(matrixSum, mat.SigmaXY);
-                vectorSum = ModuleCalcul.AdditionVecteurs(vectorSum, mat.SigmaX);
-
-                listCovariances.Add(ModuleCalcul.covarianceMatrix(mat.SigmaXY, mat.SigmaX, mat.SigmaXY.GetLength(0)));
-            }
-
-            listCovariances.Add(ModuleCalcul.covarianceMatrix(matrixSum, vectorSum, matrixSum.GetLength(0)));
-
-            matrThirteen = listCovariances.Last();
-
-            NavMenu.firstTime = false;
-
-            matrThirteenStatic = this.matrThirteen;
-            matrixListStatic = this.matrixList;
-        }
-    }
 
 
 
@@ -189,7 +104,7 @@ else
     }
 
     /// <summary>
-    /// fonction qui permet d'avoir les vecteurs X et Y
+    /// fonction qui permet d'avoir les vecteurs X et Y, le grand X, ainsi que les betaMR et betaSR
     /// </summary>
     /// <param name="e"></param>
     private void ProceedButton(MouseEventArgs e)
@@ -208,35 +123,37 @@ else
 
 
         // On commence par remplir les liste contenant les coordonnées des vecteurs X et Y sélcectionnés. tempList sert pour connaître les coefficients entrés par l'utiilisateur.
-        foreach (Indicateur indicateur in matrixListStatic[0].Indicateurs)
+        foreach (Indicateur indicateur in Table.matrixListStatic[12].Indicateurs)
         {
             if (indicateur.IsChecked) { coordMatrixX.Add(i); }
             else if (indicateur.Coefficient != 0.0) { tempList.Add(indicateur); coordMatrixY.Add(i); }
             i++;
         }
 
-        matrixListStatic.ForEach(matrix =>
+        // On vérifie que l'utilisateur a entré au moins un coefficient et qu'il a coché au moins un indicateur
+        if (coordMatrixX.Count > 0 && coordMatrixY.Count > 0)
         {
 
-            // On vérifie que l'utilisateur a entré au moins un coefficient et qu'il a coché au moins un indicateur
-            if (coordMatrixX.Count > 0 && coordMatrixY.Count > 0)
+            Table.matrixListStatic.ForEach(matrix =>
             {
+
+
 
                 double[][] listX = null;
                 double[][] listY = null, vecteurY = null;
                 double[][] listCoef = null;
 
 
-
                 listX = new double[coordMatrixX.Count][];
                 listY = new double[coordMatrixY.Count][];
                 listCoef = new double[tempList.Count][];
 
-                // on remplit listY avec les lignes correspondantes
+                // on remplit listY avec les lignes correspondantes (listCoef contient les coefficients
+                // inscrits par l'utilisateur
                 for (int j = 0; j < coordMatrixY.Count; j++)
                 {
                     listCoef[j] = new double[] { tempList[j].Coefficient };
-                    listY[j] = listCovariances[covIndex][coordMatrixY[j]];
+                    listY[j] = Table.listCovariancesStatic[covIndex][coordMatrixY[j]];
                 }
 
                 // enfin, on obtient le vecteur Y :
@@ -252,8 +169,8 @@ else
                 {
                     if (matrix.Indicateurs[j].Coefficient == 0.0)
                     {
-                        preBetaSRList.Add(vecteurY[j][0] / listCovariances[covIndex][j][j]);
-                        preVarSRList.Add((vecteurY[j][0] / listCovariances[covIndex][j][j]) * vecteurY[j][0]);
+                        preBetaSRList.Add(vecteurY[j][0] / Table.listCovariancesStatic[covIndex][j][j]);
+                        preVarSRList.Add((vecteurY[j][0] / Table.listCovariancesStatic[covIndex][j][j]) * vecteurY[j][0]);
                     }
                 }
 
@@ -268,7 +185,7 @@ else
 
                     for (int k = 0; k < coordMatrixX.Count; k++)
                     {
-                        listX[j][k] = listCovariances[covIndex][coordMatrixX[j]][coordMatrixX[k]];
+                        listX[j][k] = Table.listCovariancesStatic[covIndex][coordMatrixX[j]][coordMatrixX[k]];
                     }
                 }
 
@@ -296,7 +213,7 @@ else
                 i = 0;
                 int m = 0;
                 int n = 0;
-                for (int j = 0; j < matrice.Indicateurs.Count; j++)
+                for (int j = 0; j < Table.matrixListStatic[0].Indicateurs.Count; j++)
                 {
                     matrix.Indicateurs[j].BetaValueMR = 0.0;
                     matrix.Indicateurs[j].BetaValueSR = 0.0;
@@ -335,14 +252,16 @@ else
                 grandX.Add(ModuleCalcul.MultiplicationMatrix(listX, betaMRList));
 
                 covIndex++;
-            }
+            });
 
 
-        });
+            // On se déplace à la page Graphe.razor
+            NavManager.NavigateTo("/");
 
 
-        // On se déplace à la page Graphe.razor
-        NavManager.NavigateTo("/Graphe");
+        }
+
+
     }
 
     public double GetVarY(double[][] subMatrixY, double[][] listCoef)
@@ -598,59 +517,5 @@ else
     //    //    sousMatrice.Indicateurs.Clear();
     //    //}
     //    return sousMatrice;
-    //}
-
-    public class Indicateur
-    {
-        public string Nom { get; set; }
-
-        public bool IsChecked { get; set; }
-
-        public double Moyenne { get; set; }
-
-        public double Variance { get; set; }
-
-        public double Coefficient { get; set; }
-
-        public double BetaValueMR { get; set; }
-
-        public double BetaValueSR { get; set; }
-
-        public double VarMR { get; set; }
-
-        public double VarSR { get; set; }
-
-
-        public override bool Equals(object obj)
-        {
-            if (obj == null || !(obj is Indicateur))
-            {
-                return false;
-            }
-
-            Indicateur i = (Indicateur)obj;
-
-            return this.Nom == i.Nom && this.IsChecked == i.IsChecked && this.Moyenne == i.Moyenne &&
-                this.Variance == i.Variance && this.Coefficient == i.Coefficient && this.BetaValueMR == i.BetaValueMR &&
-                this.BetaValueSR == i.BetaValueSR && this.VarMR == i.VarMR && this.VarSR == i.VarSR;
-        }
-
-        public override int GetHashCode()
-        {
-            return Nom.GetHashCode() ^ IsChecked.GetHashCode() ^ Moyenne.GetHashCode() ^ Variance.GetHashCode() ^
-                Coefficient.GetHashCode() ^ BetaValueMR.GetHashCode() ^ BetaValueSR.GetHashCode() ^ VarMR.GetHashCode() ^
-                VarSR.GetHashCode();
-        }
-    }
-
-    public class MatriceR
-    {
-        public List<Indicateur> Indicateurs { get; set; }
-        public double[][] SigmaXY { get; set; }
-        public double[] SigmaX { get; set; }
-        public int NombrePoints { get; set; }
-        public double[][] Covariance { get; set; }
-        public double[][] SigmaXY_Centre { get; set; }
-
-    }
+    //}    
 }

@@ -19,7 +19,7 @@
 
 
 <body>
-    @if (Indicateurs.matrixListStatic == null || Indicateurs.matrixListStatic[0] == null)
+    @if (Table.matrixListStatic == null || Table.matrixListStatic[0] == null)
     {
 <p><em>Loading...</em></p> }
 else
@@ -36,38 +36,44 @@ else
         </tr>
     </thead>
     <tbody>
-        @foreach (Indicateurs.Indicateur indicateur in Indicateurs.matrixListStatic[0].Indicateurs)
+
+        @foreach (Indicateur indicateur in listOfSelectedX)
         {
             // On check si l'indicateur a été coché ou pas
-    @if (indicateur.IsChecked)
-    {
-    <tr>
-        <td>@indicateur.Nom</td>
+@if (indicateur.IsChecked)
+{
+<tr>
+    <td>@indicateur.Nom</td>
 
-        <td>@(Math.Round(indicateur.BetaValueSR * 10000) / 10000)</td>
+    <td>@(Math.Round(indicateur.BetaValueSR * 10000) / 10000)</td>
 
-        <td>
-            <input type="checkbox" id="checked" name="checked" @onchange="eventArgs => { PlotSR(indicateur, eventArgs.Value); }">
-        </td>
+    <td>
+        <input type="checkbox" id="checked" name="checked" @onchange="eventArgs => { PlotSR(indicateur, eventArgs.Value); }">
+    </td>
 
-        <td>@(Math.Round(indicateur.BetaValueMR * 10000) / 10000)</td>
+    <td>@(Math.Round(indicateur.BetaValueMR * 10000) / 10000)</td>
 
-        <td>
-            <input type="checkbox" id="checked1" name="checked1" @onchange="eventArgs => { PlotMR(indicateur, eventArgs.Value); }">
-        </td>
-    </tr>}}
+    <td>
+        <input type="checkbox" id="checked1" name="checked1" @onchange="eventArgs => { PlotMR(indicateur, eventArgs.Value); }">
+    </td>
+</tr>
+}}
 
-        <PlotlyChart style="height: 60vh; min-height: 350px; width: 100vh; min-width: 1000px" @bind-Config="config" @bind-Layout="layout" @bind-Data="data" @ref="chart1" />
 
     </tbody>
-</table>}
+</table>
+
+                <PlotlyChart style="height: 60vh; min-height: 350px; width: 100vh; min-width: 1000px" @bind-Config="config" @bind-Layout="layout" @bind-Data="data" @ref="chart1" />}
 
 </body>
 
 @code { 
-    PlotlyChart chart1;
-    Config config = new Config();
-    Layout layout = new Layout();
+
+        List<Indicateur> listOfSelectedX = new List<Indicateur>();
+        PlotlyChart chart1;
+
+        Config config = new Config();
+        Layout layout = new Layout();
     // Using of the interface IList is important for the event callback!
     private IList<ITrace> data = new List<ITrace>
     {
@@ -76,77 +82,78 @@ else
             Name = "plots",
             Mode = ModeFlag.Lines | ModeFlag.Markers,
             X = new List<object>(),
-            Y = new List<object>()
+            Y = new List<object>(),
         }
     };
 
 
-    public async Task PlotSR(Indicateurs.Indicateur indicateur, object e)
-    {
-        int index = Indicateurs.matrixListStatic[0].Indicateurs.FindIndex(i => i.Equals(indicateur));
 
+    public async Task PlotSR(Indicateur indicateur, object e)
+    {
+        int index = Table.matrixListStatic[0].Indicateurs.FindIndex(i => i.Equals(indicateur));
+
+        IList<object> x = new List<object>() { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
+
+        IList<object> y = new List<object>();
+        Table.matrixListStatic.ForEach(x => y.Add(x.Indicateurs[index].BetaValueSR));
+
+        Scatter scatter = new Scatter
+        {
+            Name = $"{Table.matrixListStatic[0].Indicateurs[index].Nom}" + " BetaSR",
+            Mode = ModeFlag.Lines | ModeFlag.Markers,
+            X = x,
+            Y = y
+        };
 
         if ((bool)e)
         {
-            IList<object> x = new List<object>() { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
-
-            IList<object> y = new List<object>();
-            Indicateurs.matrixListStatic.ForEach(x => y.Add(x.Indicateurs[index].BetaValueSR));
-
-
-
-            await chart1.AddTrace(new Scatter
-            {
-                Name = $"{Indicateurs.matrixListStatic[0].Indicateurs[index].Nom}",
-                Mode = ModeFlag.Lines | ModeFlag.Markers,
-                X = x,
-                Y = y
-            });
+            await chart1.AddTrace(scatter);
 
         }
         else
         {
-            await chart1.DeleteTrace(0);
-            await Replot();
+            await chart1.DeleteTrace(scatter);
         }
 
     }
 
-    public async Task PlotMR(Indicateurs.Indicateur indicateur, object e)
+    public async Task PlotMR(Indicateur indicateur, object e)
     {
 
-        int index = Indicateurs.matrixListStatic[0].Indicateurs.FindIndex(i => i.Equals(indicateur));
+        int index = Table.matrixListStatic[0].Indicateurs.FindIndex(i => i.Equals(indicateur));
+
+        IList<object> x = new List<object>() { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
+
+        IList<object> y = new List<object>();
+        Table.matrixListStatic.ForEach(x => y.Add(x.Indicateurs[index].BetaValueMR));
+
+        Scatter scatter = new Scatter
+        {
+            Name = $"{Table.matrixListStatic[0].Indicateurs[index].Nom}" + " BetaMR",
+            Mode = ModeFlag.Lines | ModeFlag.Markers,
+            X = x,
+            Y = y
+        };
+
         if ((bool)e)
         {
-            IList<object> x = new List<object>() { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
-
-            IList<object> y = new List<object>();
-            Indicateurs.matrixListStatic.ForEach(x => y.Add(x.Indicateurs[index].BetaValueMR));
-
-
-
-            await chart1.AddTrace(new Scatter
-            {
-                Name = $"{Indicateurs.matrixListStatic[0].Indicateurs[index].Nom}",
-                Mode = ModeFlag.Lines | ModeFlag.Markers,
-                X = x,
-                Y = y
-            });
+            await chart1.AddTrace(scatter);
 
         }
         else
         {
-            await chart1.Clear();
-            await Replot();
+            await chart1.DeleteTrace(scatter);
         }
     }
 
-    private async Task Replot()
+    protected override async Task OnInitializedAsync()
     {
-        foreach (Indicateurs.Indicateur indicateur in Indicateurs.matrixListStatic[0].Indicateurs)
+        if (!NavMenu.firstTime)
         {
-            if (indicateur.IsChecked) ;
+            listOfSelectedX = Table.matrixListStatic[0].Indicateurs.ToList().FindAll(x => x.IsChecked);
+            listOfSelectedX.Sort((x, y) => y.BetaValueSR.CompareTo(x.BetaValueSR));
         }
-    }
 
     }
+
+}
