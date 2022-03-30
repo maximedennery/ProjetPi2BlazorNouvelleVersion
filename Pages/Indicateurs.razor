@@ -14,78 +14,104 @@
 
 @if (Table.matrixListStatic[0] == null)
 {
-    <p><em>Loading...</em></p>
-}
+<p><em>Loading...</em></p> }
 else
 {
-    //On a le boutton Proceed qui permet d'avoir les vecteurs X et Y
-    <button @onclick="@ProceedButton">Proceed</button>
+// Affichage de la table
+<table class="table">
+    <thead>
+        <tr>
+            <th>Variance de Y</th>
+            <th>Variance expliquee</th>
+            <th>R squared</th>
+            <th>adjusted R squared</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>@(Math.Round(varY * 10000) / 10000)</td>
+            <td>@(Math.Round(varExpliquee * 10000) / 10000)</td>
+            <td>@(Math.Round(RSquared * 10000) / 10000)</td>
+            <td>@(Math.Round(ExplainedRSquared * 10000) / 10000)</td>
+        </tr>
+    </tbody>
+</table> //On a le boutton Proceed qui permet d'avoir les vecteurs X et Y
+<button @onclick="@ProceedButton">Proceed</button>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Check</th>
+                            <th>Center</th>
+                            <th>Name</th>
+                            <th>Selected</th>
+                            <th>Mean</th>
+                            <th>Var</th>
+                            <th>Coef</th>
+                            <th>BetaSR</th>
+                            <th>VarSR</th>
+                            <th>BetaMR</th>
+                            <th>VarMR</th>
+                            <th>Model BetaSR</th>
+                            <th>Model VarSR</th>
+                            <th>Model BetaMR</th>
+                            <th>Model VarMR</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var indicateur in Table.matrixListStatic.Last().Indicateurs)
+                        {
+                            // On check si la valeur du coefficient est égale à 0, auquel cas on désactive la checkbox et l'indicateur a la propriété IsChecked à false
+        @if (Convert.ToDouble(indicateur.Coefficient) != 0.0) { indicateur.IsChecked = false; checkIsDisable = true; isChecked = false; }
+        else if (!indicateur.IsChecked) { checkIsDisable = false; isChecked = false; }
+        else { checkIsDisable = false; isChecked = true; }
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Checked</th>
-                <th>Centered</th>
-                <th>Name of Indicators</th>
-                <th>Selected</th>
-                <th>Mean</th>
-                <th>Var</th>
-                <th>Coef</th>
-                <th>BetaSR</th>
-                <th>VarSR</th>
-                <th>BetaMR</th>
-                <th>VarMR</th>
+                            <tr>
+                                <td>
+                                    <input type="checkbox" id="checked" name="checked" checked="@isChecked" disabled="@checkIsDisable" @onchange="eventArgs => { CheckboxClicked1(indicateur, eventArgs.Value); }">
+                                </td>
+                                <td>
+                                    <input type="checkbox" id="scales" name="scales" @onchange="eventArgs => { CheckboxClicked2(indicateur, eventArgs.Value); }">
+                                </td>
+                                <td>@indicateur.Nom</td>
 
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var indicateur in Table.matrixListStatic.Last().Indicateurs)
-            {
-                // On check si la valeur du coefficient est égale à 0, auquel cas on désactive la checkbox et l'indicateur a la propriété IsChecked à false
-                @if (Convert.ToDouble(indicateur.Coefficient) != 0.0) { indicateur.IsChecked = false; checkIsDisable = true; isChecked = false; }
-                else if (!indicateur.IsChecked) { checkIsDisable = false; isChecked = false; }
-                else { checkIsDisable = false; isChecked = true; }
+                                <!-- Displaying properly if the indicator is checked or not ("Yes" or "No") -->
+                                <td>@{string val = indicateur.IsChecked ? "Yes" : "No";} @val</td>
 
-                <tr>
-                    <td>
-                        <input type="checkbox" id="checked" name="checked" checked="@isChecked" disabled="@checkIsDisable" @onchange="eventArgs => { CheckboxClicked1(indicateur, eventArgs.Value); }">
-                    </td>
-                    <td>
-                        <input type="checkbox" id="scales" name="scales" @onchange="eventArgs => { CheckboxClicked2(indicateur, eventArgs.Value); }">
-                    </td>
-                    <td>@indicateur.Nom</td>
-                    <td>@indicateur.IsChecked</td>
-                    <td @onmousemove="@(e => fullNumber = indicateur.Moyenne)">@(Math.Round(indicateur.Moyenne * 10000) / 10000)</td>
-                    <td @onmousemove="@(e => fullNumber = indicateur.Variance)">@(Math.Round(indicateur.Variance * 10000) / 10000)</td>
-                    <td>
-                        <input id="txtWord" type="number" name="txtWord" placeholder="Set a value" @bind="@indicateur.Coefficient" style="width:60px;" />
-                    </td>
-                    <td>@(Math.Round(indicateur.BetaValueSR * 10000) / 10000)</td>
-                    <td>@(Math.Round(indicateur.VarSR * 10000) / 10000)</td>
-                    <td>@(Math.Round(indicateur.BetaValueMR * 10000) / 10000)</td>
-                    <td>@(Math.Round(indicateur.VarMR * 10000) / 10000)</td>
+                                <td @onmousemove="@(e => fullNumber = indicateur.Moyenne)">@(Math.Round(indicateur.Moyenne * 10000) / 10000)</td>
+                                <td @onmousemove="@(e => fullNumber = indicateur.Variance)">@(Math.Round(indicateur.Variance * 10000) / 10000)</td>
+                                <td>
+                                    <input id="txtWord" type="number" name="txtWord" placeholder="Set a value" @bind="@indicateur.Coefficient" style="width:50px;" />
+                                </td>
+                                <td>@(Math.Round(indicateur.BetaValueSR * 10000) / 10000)</td>
+                                <td>@(Math.Round(indicateur.VarSR * 10000) / 10000)</td>
+                                <td>@(Math.Round(indicateur.BetaValueMR * 10000) / 10000)</td>
+                                <td>@(Math.Round(indicateur.VarMR * 10000) / 10000)</td>
 
 
-                    <td>@(Math.Round(indicateur.BetaValueSR * 10000) / 10000)</td>
-                    <td>@(Math.Round(indicateur.VarSR * 10000) / 10000)</td>
-                    <td>@(Math.Round(indicateur.BetaValueMR * 10000) / 10000)</td>
-                    <td>@(Math.Round(indicateur.VarMR * 10000) / 10000)</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-})
+                                <td>@(Math.Round(indicateur.BetaValueSRModel * 10000) / 10000)</td>
+                                <td>@(Math.Round(indicateur.VarSRModel * 10000) / 10000)</td>
+                                <td>@(Math.Round(indicateur.BetaValueMRModel * 10000) / 10000)</td>
+                                <td>@(Math.Round(indicateur.VarMRModel * 10000) / 10000)</td>
+                            </tr>
+}
+                    </tbody>
+                </table>
+}
 
-@code {
-    private MatriceR sousMatrice;
+@code { private MatriceR sousMatrice;
 
     private string value;
     private double fullNumber { get; set; }
     private bool checkIsDisable { get; set; }
     private bool isChecked { get; set; }
 
+    private double varY;
+    private double varExpliquee;
+    private double RSquared;
+    private double ExplainedRSquared;
 
-
+    List<double[][]> grandX = new List<double[][]>();
+    int covIndex;
 
     private void onChange(Microsoft.AspNetCore.Components.ChangeEventArgs args)
     {
@@ -103,275 +129,304 @@ else
         }
     }
 
+
     /// <summary>
     /// fonction qui permet d'avoir les vecteurs X et Y, le grand X, ainsi que les betaMR et betaSR
     /// </summary>
     /// <param name="e"></param>
     private void ProceedButton(MouseEventArgs e)
     {
-
-        List<double[][]> grandX = new List<double[][]>();
-
-
-
-        List<Indicateur> tempList = new List<Indicateur>();
-        List<int> coordMatrixX = new List<int>();
-        List<int> coordMatrixY = new List<int>();
+        List<int> coordMatrixX = new List<int>() { };
+        List<int> coordMatrixY = new List<int>() { };
+        List<Indicateur> tempList = new List<Indicateur>() { };
         int i = 0;
-        int covIndex = 0;
-
-
+        covIndex = 0;
 
         // On commence par remplir les liste contenant les coordonnées des vecteurs X et Y sélcectionnés. tempList sert pour connaître les coefficients entrés par l'utiilisateur.
-        foreach (Indicateur indicateur in Table.matrixListStatic[12].Indicateurs)
+        foreach (Indicateur indicateur in Table.matrixListStatic.Last().Indicateurs)
         {
             if (indicateur.IsChecked) { coordMatrixX.Add(i); }
             else if (indicateur.Coefficient != 0.0) { tempList.Add(indicateur); coordMatrixY.Add(i); }
             i++;
         }
 
-        // On vérifie que l'utilisateur a entré au moins un coefficient et qu'il a coché au moins un indicateur
         if (coordMatrixX.Count > 0 && coordMatrixY.Count > 0)
         {
-
             Table.matrixListStatic.ForEach(matrix =>
             {
-
-
-
-                double[][] listX = null;
-                double[][] listY = null, vecteurY = null;
-                double[][] listCoef = null;
-
-
-                listX = new double[coordMatrixX.Count][];
-                listY = new double[coordMatrixY.Count][];
-                listCoef = new double[tempList.Count][];
-
-                // on remplit listY avec les lignes correspondantes (listCoef contient les coefficients
-                // inscrits par l'utilisateur
-                for (int j = 0; j < coordMatrixY.Count; j++)
-                {
-                    listCoef[j] = new double[] { tempList[j].Coefficient };
-                    listY[j] = Table.listCovariancesStatic[covIndex][coordMatrixY[j]];
-                }
-
-                // enfin, on obtient le vecteur Y :
-                vecteurY = ModuleCalcul.MultiplicationMatrix(TransposeMatrix(listY), listCoef);
-
-                // on peut donc calculer les betaSR
-                // on utilise une List car on va utiliser la propriété Add (plus pratique qu'un array)
-                List<double> preBetaSRList = new List<double>();
-                List<double> preVarSRList = new List<double>();
-
-
-                for (int j = 0; j < matrix.Indicateurs.Count; j++)
-                {
-                    if (matrix.Indicateurs[j].Coefficient == 0.0)
-                    {
-                        preBetaSRList.Add(vecteurY[j][0] / Table.listCovariancesStatic[covIndex][j][j]);
-                        preVarSRList.Add((vecteurY[j][0] / Table.listCovariancesStatic[covIndex][j][j]) * vecteurY[j][0]);
-                    }
-                }
-
-                double[] betaSRList = preBetaSRList.ToArray();
-                double[] varSRList = preVarSRList.ToArray();
-
-
-                // On fait de même avec listX
-                for (int j = 0; j < coordMatrixX.Count; j++)
-                {
-                    listX[j] = new double[coordMatrixX.Count];
-
-                    for (int k = 0; k < coordMatrixX.Count; k++)
-                    {
-                        listX[j][k] = Table.listCovariancesStatic[covIndex][coordMatrixX[j]][coordMatrixX[k]];
-                    }
-                }
-
-
-                double[][] xPrimeY = new double[coordMatrixX.Count][];
-
-                // Intersection entre le vecteur Y et les X selectionnés
-                for (int j = 0; j < coordMatrixX.Count; j++)
-                {
-                    xPrimeY[j] = new double[] { vecteurY[coordMatrixX[j]][0] };
-                }
-
-
-
-                double[][] betaMRList = ModuleCalcul.MultiplicationMatrix(listX.Inverse(), xPrimeY);
-                double[][] varMRList = new double[betaMRList.GetLength(0)][];
-
-                for (int j = 0; j < varMRList.GetLength(0); j++)
-                {
-                    varMRList[j] = new double[betaMRList[0].GetLength(0)];
-                    varMRList[j][0] = betaMRList[j][0] * vecteurY[coordMatrixX[j]][0];
-                }
-
-                //Enfin, on ré-attribue les bonnes valeurs de betaValueSR et betaValueMR :
-                i = 0;
-                int m = 0;
-                int n = 0;
-                for (int j = 0; j < Table.matrixListStatic[0].Indicateurs.Count; j++)
-                {
-                    matrix.Indicateurs[j].BetaValueMR = 0.0;
-                    matrix.Indicateurs[j].BetaValueSR = 0.0;
-                    matrix.Indicateurs[j].VarMR = 0.0;
-                    matrix.Indicateurs[j].VarSR = 0.0;
-
-
-                    // Si l'indicateur est coché, on attribue les bonnes valeurs de BetaMR et VarMR aux indicateurs
-                    if (coordMatrixX.Contains(j))
-                    {
-                        matrix.Indicateurs[j].IsChecked = true;
-                        matrix.Indicateurs[j].BetaValueMR = betaMRList[i][0];
-                        matrix.Indicateurs[j].VarMR = varMRList[i][0];
-                        i++;
-                    }
-
-                    // Si le coefficient est égal à 0, on attribue les bonnes valeurs de BetaSR et VarSR aux indicateurs
-                    if (!coordMatrixY.Contains(j))
-                    {
-                        matrix.Indicateurs[j].BetaValueSR = betaSRList[m];
-                        matrix.Indicateurs[j].VarSR = varSRList[m];
-                        m++;
-                    }
-
-                    // Si le coefficient est différent de 0, on précise sa valeur dans matrix.Indicateurs
-                    else
-                    {
-                        matrix.Indicateurs[j].Coefficient = listCoef[n][0];
-                        n++;
-
-                    }
-
-                }
-
-
-                grandX.Add(ModuleCalcul.MultiplicationMatrix(listX, betaMRList));
-
+                CalculData(matrix, coordMatrixX, coordMatrixY, tempList);
                 covIndex++;
             });
+        }
+    }
+
+    private double[][] CalculData(MatriceR matrix, List<int> coordMatrixX, List<int> coordMatrixY, List<Indicateur> tempList, string add = "", int inde = -1)
+    {
+
+        if (add == null) { return null; }
 
 
-            // On se déplace à la page Graphe.razor
-            NavManager.NavigateTo("/");
+        double[][] listX = null;
+        double[][] listY = null, vecteurY = null;
+        double[][] listCoef = null;
 
 
+        listX = new double[coordMatrixX.Count][];
+        listY = new double[coordMatrixY.Count][];
+        listCoef = new double[tempList.Count][];
+
+        // on remplit listY avec les lignes correspondantes (listCoef contient les coefficients
+        // inscrits par l'utilisateur
+        for (int j = 0; j < coordMatrixY.Count; j++)
+        {
+            listCoef[j] = new double[] { tempList[j].Coefficient };
+            listY[j] = Table.listCovariancesStatic[covIndex][coordMatrixY[j]];
+        }
+        // enfin, on obtient le vecteur Y :
+        vecteurY = ModuleCalcul.MultiplicationMatrix(ModuleCalcul.TransposeMatrix(listY), listCoef);
+
+        // on peut donc calculer les betaSR
+        // on utilise une List car on va utiliser la propriété Add (plus pratique qu'un array)
+        List<double> preBetaSRList = new List<double>();
+        List<double> preVarSRList = new List<double>();
+
+
+        for (int j = 0; j < matrix.Indicateurs.Count; j++)
+        {
+            if (!coordMatrixY.Contains(j))
+            {
+                preBetaSRList.Add(vecteurY[j][0] / Table.listCovariancesStatic[covIndex][j][j]);
+                preVarSRList.Add((vecteurY[j][0] / Table.listCovariancesStatic[covIndex][j][j]) * vecteurY[j][0]);
+            }
+        }
+
+        double[] betaSRList = preBetaSRList.ToArray();
+        double[] varSRList = preVarSRList.ToArray();
+
+        // On fait de même avec listX
+        for (int j = 0; j < coordMatrixX.Count; j++)
+        {
+            listX[j] = new double[coordMatrixX.Count];
+
+            for (int k = 0; k < coordMatrixX.Count; k++)
+            {
+                listX[j][k] = Table.listCovariancesStatic[covIndex][coordMatrixX[j]][coordMatrixX[k]];
+            }
+        }
+
+        double[][] xPrimeY = new double[coordMatrixX.Count][];
+
+        // Intersection entre le vecteur Y et les X selectionnés
+        for (int j = 0; j < coordMatrixX.Count; j++)
+        {
+            xPrimeY[j] = new double[] { vecteurY[coordMatrixX[j]][0] };
+        }
+
+        double[][] betaMRList = ModuleCalcul.MultiplicationMatrix(listX.Inverse(), xPrimeY);
+        double[][] varMRList = new double[betaMRList.GetLength(0)][];
+
+        for (int j = 0; j < varMRList.GetLength(0); j++)
+        {
+            varMRList[j] = new double[betaMRList[0].GetLength(0)];
+            varMRList[j][0] = betaMRList[j][0] * vecteurY[coordMatrixX[j]][0];
         }
 
 
+        if (add != "")
+        {
+            FillDataModel(matrix, coordMatrixX, coordMatrixY, listCoef, betaMRList, betaSRList, varMRList, varSRList, add, inde);
+        }
+
+        else
+        {
+            FillData(matrix, coordMatrixX, coordMatrixY, tempList, listCoef, betaMRList, betaSRList, varMRList, varSRList);
+        }
+
+
+        grandX.Add(ModuleCalcul.MultiplicationMatrix(listX, betaMRList));
+
+        Compute();
+
+
+        return null;
     }
+
+
+    private void FillData(MatriceR matrix, List<int>coordMatrixX, List<int>coordMatrixY, List<Indicateur>tempList,
+        double[][] listCoef, double[][] betaMRList, double[] betaSRList, double[][] varMRList, double[] varSRList)
+    {
+        //Enfin, on ré-attribue les bonnes valeurs de betaValueSR et betaValueMR :
+        // i est l'indice qui parcourt les listes betaMRList et varMRList.
+        // m est l'indice qui parcourt les listes betaSRList et varSRList.
+        // n est l'indice qui parcout la liste listCoeff
+        int i = 0, m = 0, n = 0;
+        for (int j = 0; j < Table.matrixListStatic.Last().Indicateurs.Count; j++)
+        {
+            matrix.Indicateurs[j].BetaValueMR = 0.0;
+            matrix.Indicateurs[j].BetaValueSR = 0.0;
+            matrix.Indicateurs[j].VarMR = 0.0;
+            matrix.Indicateurs[j].VarSR = 0.0;
+
+
+            // Si l'indicateur est pris comme X, on attribue les bonnes valeurs de BetaMR et VarMR aux indicateurs
+            if (coordMatrixX.Contains(j))
+            {
+                matrix.Indicateurs[j].IsChecked = true;
+                matrix.Indicateurs[j].BetaValueMR = betaMRList[i][0];
+                matrix.Indicateurs[j].VarMR = varMRList[i][0];
+
+                matrix.Indicateurs[j].BetaValueMRModel = 0.0;
+                matrix.Indicateurs[j].VarMRModel = 0.0;
+
+
+                i++;
+            }
+
+            // Si l'indicateur n'est pas pris comme X, on s'occupe de calculer betaMRModel et varMRModel
+            else
+            {
+                matrix.Indicateurs[j].IsChecked = false;
+
+                // On ajoute l'élément j à la liste des X, puis on le retire (le temps de calculer les variables MRModel)
+                coordMatrixX.Add(j);
+                coordMatrixX.Sort();
+                CalculData(matrix, coordMatrixX, coordMatrixY, tempList, "X", j);
+                coordMatrixX.Remove(j);
+
+            }
+
+
+            // Si le coefficient est égal à 0, on attribue les bonnes valeurs de BetaSR et VarSR aux indicateurs
+            if (!coordMatrixY.Contains(j))
+            {
+                matrix.Indicateurs[j].Coefficient = 0.0;
+                matrix.Indicateurs[j].BetaValueSR = betaSRList[m];
+                matrix.Indicateurs[j].VarSR = varSRList[m];
+
+                m++;
+            }
+
+            // Si l'indicateur est pris comme Y, on précise sa valeur dans matrix.Indicateurs
+            else
+            {
+                matrix.Indicateurs[j].Coefficient = listCoef[n][0];
+
+                n++;
+            }
+        }
+    }
+
+    private void FillDataModel(MatriceR matrix, List<int>coordMatrixX, List<int>coordMatrixY, double[][] listCoef,
+        double[][] betaMRList, double[] betaSRList, double[][] varMRList, double[] varSRList, string type, int inde)
+    {
+        switch (type) {
+
+            // cas des Multi Reg
+            case "X":
+
+                int posMR = coordMatrixX.IndexOf(inde);
+
+                matrix.Indicateurs[inde].BetaValueMRModel = betaMRList[posMR][0];
+                matrix.Indicateurs[inde].VarMRModel = varMRList[posMR][0];
+
+                break;
+
+            // cas des Single Reg
+            case "Y":
+
+                int posSR = coordMatrixY.IndexOf(inde);
+
+                matrix.Indicateurs[inde].BetaValueSRModel = betaSRList[posSR];
+                matrix.Indicateurs[inde].VarSRModel = varSRList[posSR];
+
+                break;
+
+            default:
+                break;
+        }
+
+    }
+
+
 
     public double GetVarY(double[][] subMatrixY, double[][] listCoef)
     {
-        return ModuleCalcul.MultiplicationMatrix(MultiplicationMatrix(TransposeMatrix(listCoef), TransposeMatrix(subMatrixY)), listCoef)[0][0];
+        return ModuleCalcul.MultiplicationMatrix(ModuleCalcul.MultiplicationMatrix(
+        ModuleCalcul.TransposeMatrix(listCoef), subMatrixY),
+        listCoef)[0][0];
     }
 
-    public static MatriceR DataImport(string content)
+    private void Compute()
     {
-        var format = new NumberFormatInfo() { NegativeSign = "-", NumberDecimalSeparator = "." };
-        int nombrePoints = 0;
-        List<double> sigmaX_doubles = new List<double>();
-        List<Indicateur> indicateurs = new List<Indicateur>();
-        List<List<double>> sigmaXY_doubles = new List<List<double>>();
+        // Ces deux listes nous aideront à calculer les variances. Les éléments sont des listes de type Object, qui
+        // sont toutes de longueur égale à 2. Le premier élément est de type Indicateur et représente l' indicateur
+        // sélectionné en tant que X ou que Y (en fonction des cas). Le second élément est l'indice de cet
+        // indicateur, que l'on réutilisera pour trouver la covariance des indicateurs deux à deux (à l'aide de la
+        // variable listCovariancesStatic).
+        List<object[]> XSelected = new List<object[]>();
+        List<object[]> YSelected = new List<object[]>();
 
+        // on initialise les variances (variance des Y et variance expliquée)
+        varY = 0.0;
+        varExpliquee = 0.0;
 
-        // Mise au propre des données
-        string[] lines = content.Split('\n');
-        List<string> final_lines = new List<string>();
-        foreach (string line in lines) if (line.Trim() != "\n" && line.Trim() != null && line.Trim() != "") final_lines.Add(line);
+        // La matrice agregée est la dernière MatriceR de matrixListStatic
+        MatriceR matriceAgregee = Table.matrixListStatic.Last();
 
-        // Get nombre de points (dernière ligne => -1)
-        nombrePoints = Convert.ToInt32(final_lines[final_lines.Count - 1]);
-
-        // Get SigmaX (avant-dernière ligne => -2)
-        string[] sigmaX_strings = final_lines[final_lines.Count - 2].Split(',');
-        foreach (string sig in sigmaX_strings) sigmaX_doubles.Add(Convert.ToDouble(sig, format));
-        double[] sigmaX_doubles_array = sigmaX_doubles.ToArray();
-
-        // Get Indicateurs (première ligne => 0)
-        string[] columns = final_lines[0].Split(',');
-        foreach (string indicateur in columns)
+        for (int i = 0; i < matriceAgregee.Indicateurs.Count; i++)
         {
-            indicateurs.Add(new Indicateur { Nom = indicateur.Trim('"').Trim('"'), IsChecked = false });
-        }
-
-
-        // Get les données (deuxième ligne jusqu'à l'avant avant dernière ligne => 1 to -3)
-        foreach (string dataLine in final_lines.GetRange(1, final_lines.Count - 3))
-        {
-            List<Double> listLigne = new List<double>();
-            foreach (string dataPoint in dataLine.Split(',')) listLigne.Add(Convert.ToDouble(dataPoint, format));
-            sigmaXY_doubles.Add(listLigne);
-        }
-        double[][] sigmaXY_doubles_array = sigmaXY_doubles.Select(value => value.ToArray()).ToArray();
-
-        // Initialisation de la matrice de covariance associée
-        double[][] covariance = covarianceMatrix(sigmaXY_doubles_array, sigmaX_doubles_array, nombrePoints);
-
-
-        // ici on doit initialiser les moyennes et variance des indicateurs
-        int i = 0;
-        //int taille = indicateurs.Count;
-        foreach (Indicateur indicateur in indicateurs)
-        {
-            //indicateur.Moyenne = sigmaX_doubles_array[i] / taille;
-            indicateur.Moyenne = sigmaX_doubles_array[i] / nombrePoints;     // initialisation des moyennes
-
-            indicateur.Variance = covariance[i][i];       // initialisation des variances
-
-            i++;
-        }
-
-
-        //initilisation du SigmaXY_Centre qui contient la matrice sigmaXY mais centrée (on retire la moyenne) et réduit (on divise par la variance)
-
-        /*
-        double[][] sigmaXY_Centre = new double[sigmaXY_doubles_array.GetLength(0)][];
-        double moyenne = 0;
-        double standard_deviation = 0;
-        for (int j=0;j< sigmaXY_doubles_array.Length; j++)
-        {
-            Console.WriteLine(j);
-
-            moyenne = indicateurs[j].Moyenne;
-            Console.WriteLine(j);
-
-            standard_deviation = Math.Sqrt(indicateurs[j].Variance);
-            Console.WriteLine("j = "+ j);
-
-            Console.WriteLine(sigmaXY_doubles_array[0].Length);
-            for (int k = 0; k < sigmaXY_doubles_array[0].Length; k++)   //error Index was outside the bounds of the array
+            if (matriceAgregee.Indicateurs[i].IsChecked)
             {
-                Console.WriteLine("k ="+k);
-                Console.WriteLine("moyenne = "+moyenne);
-                Console.WriteLine("moyenne = " + moyenne.GetType());
-                Console.WriteLine("standard_deviation = " + standard_deviation);
-                Console.WriteLine("standard_deviation = " + standard_deviation.GetType());
-                Console.WriteLine("sigmaXY_doubles_array[j][k] = " + sigmaXY_doubles_array[j][k]);
-                Console.WriteLine("sigmaXY_doubles_array[j][k] = " + sigmaXY_doubles_array[j][k].GetType());
+                XSelected.Add(new object[] { matriceAgregee.Indicateurs[i], i });
 
-                sigmaXY_Centre[j][k] = (sigmaXY_doubles_array[j][k] - moyenne) / standard_deviation;
+                // on rajoute les a^2 * VAR(Xi)
+                varExpliquee += Math.Pow(matriceAgregee.Indicateurs[i].BetaValueMR, 2) * matriceAgregee.Indicateurs[i].VarMR;
+            }
+
+
+            else if (matriceAgregee.Indicateurs[i].Coefficient != 0.0)
+            {
+                YSelected.Add(new object[] { matriceAgregee.Indicateurs[i], i });
+
+                // on rajoute les a^2 * VAR(Yi)
+                varY += Math.Pow(matriceAgregee.Indicateurs[i].Coefficient, 2) * matriceAgregee.Indicateurs[i].Variance;
             }
         }
-        Console.WriteLine("Je suis plus la");
-        */
 
 
-
-        return new MatriceR
+        for (int i = 0; i < XSelected.Count - 1; i++)
         {
-            Indicateurs = indicateurs,
-            SigmaXY = sigmaXY_doubles_array,
-            //SigmaXY_Centre = sigmaXY_Centre,
-            SigmaX = sigmaX_doubles_array,
-            NombrePoints = nombrePoints,
-            Covariance = covariance
-        };
-    }
+            Indicateur indI = (Indicateur)XSelected[i][0];
+            for (int j = i; j < XSelected.Count; j++)
+            {
 
+                Indicateur indJ = (Indicateur)XSelected[j][0];
+
+                // on rajoute les 2 * a * b * Cov(Xi, Xj)
+                varExpliquee += 2 * Table.matrThirteenStatic[(int)XSelected[i][1]][(int)XSelected[j][1]] * indI.BetaValueMR * indJ.BetaValueMR;
+            }
+        }
+
+
+        for (int i = 0; i < YSelected.Count - 1; i++)
+        {
+            Indicateur indI = (Indicateur)YSelected[i][0];
+            for (int j = i; j < YSelected.Count; j++)
+            {
+
+                Indicateur indJ = (Indicateur)YSelected[j][0];
+
+                // on rajoute les 2 * a * b * Cov(Yi, Yj)
+                varY += 2 * Table.matrThirteenStatic[(int)YSelected[i][1]][(int)YSelected[j][1]] * indI.Coefficient * indJ.Coefficient;
+
+            }
+        }
+
+        RSquared = varY / varExpliquee;
+
+        ExplainedRSquared = 1 - (1 - RSquared) * (matriceAgregee.NombrePoints - 1) / (matriceAgregee.NombrePoints - XSelected.Count - 1);
+
+    }
 
     public static void CheckboxClicked1(Indicateur selected, object CheckedValue)
     {
@@ -382,140 +437,4 @@ else
     {
         // fonction qui doit scale l'indicateur comme sur r avec la fonction scale
 
-    }
-
-
-    public static double[][] Addition(double[][] dataDouble1, double[][] dataDouble2)
-    {
-        double[][] addition = new double[dataDouble1.GetLength(0)][];
-        for (int i = 0; i < addition.GetLength(0); i++)
-        {
-            addition[i] = new double[dataDouble1.GetLength(0)];
-            for (int j = 0; j < addition.GetLength(0); j++)
-            {
-                addition[i][j] = dataDouble1[i][j] + dataDouble2[i][j];
-            }
-        }
-        return addition;
-    }
-
-    public static double[] AdditionVecteurs(double[] vect1, double[] vect2)
-    {
-        double[] addition = new double[vect1.Length];
-        for (int i = 0; i < addition.Length; i++)
-        {
-            addition[i] = vect1[i] + vect2[i];
-        }
-        return addition;
-    }
-
-    public static double[][] MultiplicationMatrix(double[][] matA, double[][] matB)
-    {
-        double[][] res = new double[matA.GetLength(0)][];
-        double temp = 0;
-
-        for (int i = 0; i < matA.GetLength(0); i++)
-        {
-            res[i] = new double[matB[0].GetLength(0)];
-            for (int j = 0; j < matB[0].GetLength(0); j++)
-            {
-                temp = 0;
-                for (int k = 0; k < matA[0].GetLength(0); k++)
-                {
-                    temp += matA[i][k] * matB[k][j];
-                }
-                res[i][j] = temp;
-            }
-        }
-        return res;
-    }
-
-    public static double[][] TransposeMatrix(double[][] matA)
-    {
-        double[][] res = new double[matA[0].GetLength(0)][];
-
-        for (int i = 0; i < matA[0].GetLength(0); i++)
-        {
-            res[i] = new double[matA.GetLength(0)];
-            for (int j = 0; j < matA.GetLength(0); j++)
-            {
-                res[i][j] = matA[j][i];
-            }
-        }
-        return res;
-    }
-
-
-    public static double[][] covarianceMatrix(double[][] sigmaXY, double[] sigmaX, int n)
-    {
-        int longueur0 = sigmaXY.GetLength(0);
-        int longueur1 = sigmaXY[0].GetLength(0);
-        double[][] covariance = new double[longueur0][];
-
-        for (int i = 0; i < longueur0; i++)
-        {
-            covariance[i] = new double[longueur1];
-
-            for (int j = 0; j < longueur1; j++)
-            {
-                covariance[i][j] = (sigmaXY[i][j] / n) - (sigmaX[i] * sigmaX[j]) / (n * n);
-
-            }
-        }
-
-        return covariance;
-    }
-    //private static MatriceR SousMatrice(MatriceR matrice)  // renvoit une matriceR composé des Indicateurs qui ont été cochés.
-    //{
-    //    MatriceR sousMatrice = new MatriceR();
-    //    sousMatrice.Indicateurs = matrice.Indicateurs;
-    //    sousMatrice.NombrePoints = matrice.NombrePoints;
-
-    //    // if ((bool)CheckedValue == true)
-    //    //{
-    //    Console.WriteLine("Initialisation de la liste");
-    //    List<int> listIndex = new List<int>();
-
-    //    Console.WriteLine("Remplissage de la liste d'indicateur sélectionné");
-    //    // je récupère ma list d'index des indicateurs que j'ai coché pour faire ma sous matrice
-    //    foreach (Indicateur indic in matrice.Indicateurs) if (indic.IsChecked == true) listIndex.Add(matrice.Indicateurs.IndexOf(indic));
-    //    sousMatrice.SigmaXY = new double[listIndex.Capacity][];
-
-    //    Console.WriteLine("Suppression des indicateurs de la sous matrice contenus dans la liste");
-    //    // j'enlève les indicateurs qui ne sont pas coché
-    //    foreach (int indic in listIndex.OrderByDescending(v => v)) sousMatrice.Indicateurs.RemoveAt(indic);
-
-    //    Console.WriteLine("suppression des XY");
-    //    // j'enlève les colonnes sigmaXY dont les indicateurs n'ont pas été sélectionnés
-    //    for (int i = 0, j = 0; i < matrice.SigmaXY.GetLength(0); i++)
-    //    {
-    //        for (int k = 0, u = 0; k < matrice.SigmaXY.GetLength(1); k++)
-    //        {
-    //            if (listIndex.Contains(k) == true)
-    //                continue;
-
-    //            sousMatrice.SigmaXY[j][u] = matrice.SigmaXY[i][k];
-    //            u++;
-    //        }
-    //        j++;
-    //    }
-
-
-    //    Console.WriteLine("suppression des X");
-    //    // j'enlève les éléments sigmaX dont les indicateurs n'ont pas été sélectionnés
-    //    for (int k = 0, u = 0; k < matrice.SigmaX.Length; k++)
-    //    {
-    //        if (listIndex.Contains(k))
-    //            continue;
-
-    //        sousMatrice.SigmaX[u] = matrice.SigmaX[k];
-    //        u++;   // si la liste d'index ne contient pas k, alors u ne s'incrémente pas et mon nouveau vecteur somme est bien rempli d'une valeur non nulle pour chaque indice coché.
-    //    }
-    //    //}
-    //    //else
-    //    //{
-    //    //    sousMatrice.Indicateurs.Clear();
-    //    //}
-    //    return sousMatrice;
-    //}    
-}
+    } }

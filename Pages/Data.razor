@@ -1,6 +1,5 @@
 @page "/data"
 @inject HttpClient Http
-@inject IJSRuntime JSRuntime
 @using System;
 @using System.Diagnostics;
 @using System.Collections.Generic;
@@ -8,45 +7,19 @@
 @using System.IO;
 @using System.Globalization;
 
-
-
-@code {@*IFileListEntry[] selectedFiles;
-
-        void HandleSelection(IFileListEntry[] files)
-        {
-            selectedFiles = files;
-
-
-        }
-
-        async Task LoadFile(IFileListEntry file)
-        {
-            // So the UI updates to show progress
-            file.OnDataRead += (sender, eventArgs) => InvokeAsync(StateHasChanged);
-
-            // Just load into .NET memory to show it can be done
-            // Alternatively it could be saved to disk, or parsed in memory, or similar
-            var ms = new MemoryStream();
-            await file.Data.CopyToAsync(ms);*@
-
-}
-
-<h1>Visualisation des données d'une matrice</h1>
-
+<h1>Covariance matrix of the agregated matrix</h1>
 @if (matrice == null)
 {
 <p><em>Loading...</em></p> }
 else
 {
 <h2>Données</h2>
-
                 <table class="table">
                     <thead>
                         <tr>
                             @foreach (var indicateur in matrice.Indicateurs)
                             {
-            <th style="text-align:center">@indicateur.Nom</th>
-}
+            <th style="text-align:center">@indicateur.Nom</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -55,10 +28,8 @@ else
         <tr>
             @foreach (var dataPoint in dataLine)
             {
-<td style="text-align:center">@dataPoint</td>
-}
-        </tr>
-}
+<td style="text-align:center">@dataPoint</td>}
+        </tr>}
                         <tr style="border-top-style:dashed;text-align:center">
                             <td style="text-align:center;font-style:italic;font-size:21px;column-span:all;align-content:center">
                                 Sigma X
@@ -67,145 +38,17 @@ else
                         <tr style="border-top-style:dashed;border-bottom-style:dashed">
                             @foreach (var point in matrice.SigmaX)
                             {
-            <td style="text-align:center">@point </td>
-}
+            <td style="text-align:center">@point </td>}
                         </tr>
                     </tbody>
                 </table>
 
-                                <h2>Nombre de points: @matrice.NombrePoints</h2>
+                                <h2>Nombre de points: @matrice.NombrePoints</h2>}
 
-})
+@code { private MatriceR matrice;
 
-@code { 
-
-    private MatriceR matrice;
-    private List<MatriceR> matrixList = new List<MatriceR>();
-
-    protected override async Task OnInitializedAsync()
-    {
-
-        string num, temp;
-        List<double[][]> listCovariances = new List<double[][]>();
-
-        temp = await Http.GetStringAsync("sample-data/201901.csv");
-
-
-        MatriceR dataImport = Indicateurs.DataImport(temp);
-        matrixList.Add(dataImport);
-
-        double[][] matrixSum = dataImport.SigmaXY;
-        double[] vectorSum = dataImport.SigmaX;
-        int pointSum = dataImport.NombrePoints;
-        listCovariances.Add(ModuleCalcul.covarianceMatrix(matrixSum, vectorSum, matrixSum.GetLength(0)));
-        List<Indicateur> indicateurs = dataImport.Indicateurs;
-
-
-        MatriceR mat;
-
-
-        for (int i = 2; i <= 12; i++)
-        {
-
-            num = "";
-            if (i < 10) num = "0";
-
-            temp = await Http.GetStringAsync("sample-data/2019" + num + i.ToString() + ".csv");
-            mat = Indicateurs.DataImport(temp);
-            matrixList.Add(mat);
-
-            matrixSum = ModuleCalcul.Addition(matrixSum, mat.SigmaXY);
-            vectorSum = ModuleCalcul.AdditionVecteurs(vectorSum, mat.SigmaX);
-            pointSum += mat.NombrePoints;
-
-            listCovariances.Add(ModuleCalcul.covarianceMatrix(mat.SigmaXY, mat.SigmaX, mat.SigmaXY.GetLength(0)));
-
-        }
-
-        listCovariances.Add(ModuleCalcul.covarianceMatrix(matrixSum, vectorSum, matrixSum.GetLength(0)));
-
-
-        matrice = new MatriceR
-        {
-            Indicateurs = indicateurs,
-            SigmaXY = listCovariances.Last(),
-            SigmaX = vectorSum,
-            NombrePoints = pointSum
-        };
-
+            protected override async Task OnInitializedAsync()
+            {
+                matrice = Table.matrixListStatic.Last();
+            }
     }
-
-    /*
-
-    private static Indicateurs.MatriceR DataImport(string content)
-    {
-        var format = new NumberFormatInfo() { NegativeSign = "-", NumberDecimalSeparator = "." };
-        int NombrePoints = 0;
-        List<double> sigmaX_doubles = new List<double>();
-        List<Indicateurs.Indicateur> indicateurs = new List<Indicateurs.Indicateur>();
-        List<List<double>> sigmaXY_doubles = new List<List<double>>();
-
-        // Mise au propre des données
-        string[] lines = content.Split('\n');
-        List<string> final_lines = new List<string>();
-        foreach (string line in lines) if (line.Trim() != "\n" && line.Trim() != null && line.Trim() != "") final_lines.Add(line);
-
-        // Get nombre de points (dernière ligne => -1)
-        NombrePoints = Convert.ToInt32(final_lines[final_lines.Count - 1]);
-
-        // Get SigmaX (avant-dernière ligne => -2)
-        string[] sigmaX_strings = final_lines[final_lines.Count - 2].Split(',');
-        foreach (string sig in sigmaX_strings) sigmaX_doubles.Add(Convert.ToDouble(sig, format));
-
-        // Get Indicateurs (première ligne => 0)
-        string[] columns = final_lines[0].Split(',');
-        foreach (string indicateur in columns) indicateurs.Add(new Indicateurs.Indicateur { Nom = indicateur.Trim('"').Trim('"'), IsChecked = false });
-
-        // Get les données (deuxième ligne jusqu'à l'avant avant dernière ligne => 1 to -3)
-        foreach (string dataLine in final_lines.GetRange(1, final_lines.Count - 3))
-        {
-            List<Double> listLigne = new List<double>();
-            foreach (string dataPoint in dataLine.Split(',')) listLigne.Add(Convert.ToDouble(dataPoint, format));
-            sigmaXY_doubles.Add(listLigne);
-        }
-
-        double[][] sigmaXY_doubles_array = sigmaXY_doubles.Select(value => value.ToArray()).ToArray();
-
-        // Initialisation de la matrice de covariance associée
-        double[][] covariance = ModuleCalcul.covarianceMatrix(sigmaXY_doubles_array, sigmaX_doubles.ToArray(), NombrePoints);
-
-
-        // ici on doit initialiser les moyennes et variance des indicateurs
-        int i = 0;
-        //int taille = indicateurs.Count;
-        foreach (Indicateurs.Indicateur indicateur in indicateurs)
-        {
-            //indicateur.Moyenne = sigmaX_doubles_array[i] / taille;
-            indicateur.Moyenne = sigmaX_doubles.ToArray()[i] / NombrePoints;     // initialisation des moyennes
-
-            indicateur.Variance = covariance[i][i];       // initialisation des variances
-
-            i++;
-        }
-
-
-
-        return new Indicateurs.MatriceR
-        {
-            Indicateurs = indicateurs,
-            SigmaXY = sigmaXY_doubles.Select(value => value.ToArray()).ToArray(),
-            SigmaX = sigmaX_doubles.ToArray(),
-            NombrePoints = NombrePoints,
-            Covariance = covariance
-        };
-    }
-
-    */
-
-    public async Task Save()
-    {
-        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "matrixThirteen", matrice);
-        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "listMatrix", matrixList);
-    }
-
-}

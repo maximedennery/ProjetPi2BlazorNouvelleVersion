@@ -17,6 +17,11 @@ namespace ProjetPi2Blazor.Pages
         public double VarMR { get; set; }
         public double VarSR { get; set; }
 
+        public double BetaValueMRModel { get; set; }
+        public double BetaValueSRModel { get; set; }
+        public double VarMRModel { get; set; }
+        public double VarSRModel { get; set; }
+
 
 
         /// <summary>
@@ -36,7 +41,9 @@ namespace ProjetPi2Blazor.Pages
 
             return this.Nom == i.Nom && this.IsChecked == i.IsChecked && this.Moyenne == i.Moyenne &&
                 this.Variance == i.Variance && this.Coefficient == i.Coefficient && this.BetaValueMR == i.BetaValueMR &&
-                this.BetaValueSR == i.BetaValueSR && this.VarMR == i.VarMR && this.VarSR == i.VarSR;
+                this.BetaValueSR == i.BetaValueSR && this.VarMR == i.VarMR && this.VarSR == i.VarSR &&
+                this.BetaValueMRModel == i.BetaValueMRModel && this.BetaValueSRModel == i.BetaValueSRModel &&
+                this.VarMRModel == i.VarMRModel && this.VarSRModel == i.VarSRModel;
         }
 
         /// <summary>
@@ -47,7 +54,8 @@ namespace ProjetPi2Blazor.Pages
         {
             return Nom.GetHashCode() ^ IsChecked.GetHashCode() ^ Moyenne.GetHashCode() ^ Variance.GetHashCode() ^
                 Coefficient.GetHashCode() ^ BetaValueMR.GetHashCode() ^ BetaValueSR.GetHashCode() ^ VarMR.GetHashCode() ^
-                VarSR.GetHashCode();
+                VarSR.GetHashCode() ^ BetaValueMRModel.GetHashCode() ^ BetaValueSRModel.GetHashCode() ^ 
+                VarMRModel.GetHashCode() ^ VarMRModel.GetHashCode();
         }
     }
 }

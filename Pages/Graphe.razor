@@ -69,11 +69,13 @@ else
 
 @code { 
 
-        List<Indicateur> listOfSelectedX = new List<Indicateur>();
-        PlotlyChart chart1;
+    List<Indicateur> listOfSelectedX = new List<Indicateur>();
+    PlotlyChart chart1;
 
-        Config config = new Config();
-        Layout layout = new Layout();
+    Config config = new Config();
+    Layout layout = new Layout();
+
+
     // Using of the interface IList is important for the event callback!
     private IList<ITrace> data = new List<ITrace>
     {
@@ -90,26 +92,37 @@ else
 
     public async Task PlotSR(Indicateur indicateur, object e)
     {
-        int index = Table.matrixListStatic[0].Indicateurs.FindIndex(i => i.Equals(indicateur));
 
+        // Table.matrixListStatic.Last() est la matrice agrégée
+        // index est la position de l'indicateur que l'on cherche à plot
+        int index = Table.matrixListStatic.Last().Indicateurs.FindIndex(i => i.Equals(indicateur));
+
+        // x est la liste des 12 mois de l'année
         IList<object> x = new List<object>() { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
 
+        // y est la liste qui contient les betaSR des 12 mois de l'indicateur sélectionné
         IList<object> y = new List<object>();
-        Table.matrixListStatic.ForEach(x => y.Add(x.Indicateurs[index].BetaValueSR));
+        Table.matrixListStatic.ForEach(matriceR => y.Add(matriceR.Indicateurs[index].BetaValueSR));
 
+
+        // On plot à l'aide d'un Scatter
         Scatter scatter = new Scatter
         {
-            Name = $"{Table.matrixListStatic[0].Indicateurs[index].Nom}" + " BetaSR",
+            Name = $"{Table.matrixListStatic.Last().Indicateurs[index].Nom}" + " BetaSR",
             Mode = ModeFlag.Lines | ModeFlag.Markers,
             X = x,
             Y = y
         };
 
+
+
+        // Dans le cas où on coche la case, on affiche la courbe
         if ((bool)e)
         {
             await chart1.AddTrace(scatter);
 
         }
+        // Dans le cas où on décoche la case, on retire la courbe
         else
         {
             await chart1.DeleteTrace(scatter);
@@ -120,37 +133,53 @@ else
     public async Task PlotMR(Indicateur indicateur, object e)
     {
 
-        int index = Table.matrixListStatic[0].Indicateurs.FindIndex(i => i.Equals(indicateur));
+        // Table.matrixListStatic.Last() est la matrice agrégée
+        // index est la position de l'indicateur que l'on cherche à plot
+        int index = Table.matrixListStatic.Last().Indicateurs.FindIndex(i => i.Equals(indicateur));
 
+        // x est la liste des 12 mois de l'année
         IList<object> x = new List<object>() { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
 
-        IList<object> y = new List<object>();
-        Table.matrixListStatic.ForEach(x => y.Add(x.Indicateurs[index].BetaValueMR));
 
+        // y est la liste qui contient les betaMR des 12 mois de l'indicateur sélectionné
+        IList<object> y = new List<object>();
+        Table.matrixListStatic.ForEach(matriceR => y.Add(matriceR.Indicateurs[index].BetaValueMR));
+
+        // On plot à l'aide d'un Scatter
         Scatter scatter = new Scatter
         {
-            Name = $"{Table.matrixListStatic[0].Indicateurs[index].Nom}" + " BetaMR",
+            Name = $"{Table.matrixListStatic.Last().Indicateurs[index].Nom}" + " BetaMR",
             Mode = ModeFlag.Lines | ModeFlag.Markers,
             X = x,
             Y = y
         };
 
+
+
+        // Dans le cas où on coche la case, on affiche la courbe
         if ((bool)e)
         {
             await chart1.AddTrace(scatter);
 
         }
+        // Dans le cas où on décoche la case, on retire la courbe
         else
         {
             await chart1.DeleteTrace(scatter);
         }
     }
 
+
+
     protected override async Task OnInitializedAsync()
     {
         if (!NavMenu.firstTime)
         {
-            listOfSelectedX = Table.matrixListStatic[0].Indicateurs.ToList().FindAll(x => x.IsChecked);
+            // listOfSelectedX contient la liste des indicateurs qui ont été cochés dans la page Indicateurs
+            // On n'affiche que ceux de la matrice agrégée (donc ceux de Table.matrixListStatic.Last())
+            listOfSelectedX = Table.matrixListStatic.Last().Indicateurs.ToList().FindAll(x => x.IsChecked);
+
+            // On trie la liste en fonction de leur valeur de BetaSR
             listOfSelectedX.Sort((x, y) => y.BetaValueSR.CompareTo(x.BetaValueSR));
         }
 
