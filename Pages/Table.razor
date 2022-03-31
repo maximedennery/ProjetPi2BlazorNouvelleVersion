@@ -176,7 +176,7 @@
             //indicateur.Moyenne = sigmaX_doubles_array[i] / taille;
             indicateur.Moyenne = sigmaX_doubles_array[i] / nombrePoints;     // initialisation des moyennes
 
-            indicateur.Variance = covariance[i][i];       // initialisation des variances
+            indicateur.Variance = covariance[i][i] / nombrePoints;       // initialisation des variances
 
             i++;
         }

@@ -157,7 +157,7 @@ else
             });
         }
     }
-
+    int nombrePoints = Table.matrixListStatic.Last().NombrePoints;
     private double[][] CalculData(MatriceR matrix, List<int> coordMatrixX, List<int> coordMatrixY, List<Indicateur> tempList, string add = "", int inde = -1)
     {
 
@@ -195,7 +195,7 @@ else
             if (!coordMatrixY.Contains(j))
             {
                 preBetaSRList.Add(vecteurY[j][0] / Table.listCovariancesStatic[covIndex][j][j]);
-                preVarSRList.Add((vecteurY[j][0] / Table.listCovariancesStatic[covIndex][j][j]) * vecteurY[j][0]);
+                preVarSRList.Add((vecteurY[j][0] / Table.listCovariancesStatic[covIndex][j][j]) * vecteurY[j][0]/ nombrePoints);
             }
         }
 
@@ -263,7 +263,7 @@ else
             for (int j = 0; j < varMRList.GetLength(0); j++)
             {
                 varMRList[j] = new double[betaMRList[0].GetLength(0)];
-                varMRList[j][0] = betaMRList[j][0] * vecteurY[coordMatrixX[j]][0];
+                varMRList[j][0] = betaMRList[j][0] * vecteurY[coordMatrixX[j]][0]/ nombrePoints;
 
             }
         }
@@ -427,7 +427,7 @@ else
         for (int j = 0; j < varMRList.GetLength(0); j++)
         {
             varMRList[j] = new double[betaMRList[0].GetLength(0)];
-            varMRList[j][0] = betaMRList[j][0] * vecteurY[coordMatrixX[j]][0];
+            varMRList[j][0] = betaMRList[j][0] * vecteurY[coordMatrixX[j]][0]/nombrePoints;
 
         }
 
@@ -450,6 +450,7 @@ else
         varExpliquee = 0.0;
 
         // La matrice agregée est la dernière MatriceR de matrixListStatic
+
         MatriceR matriceAgregee = Table.matrixListStatic.Last();
 
         for (int i = 0; i < matriceAgregee.Indicateurs.Count; i++)
@@ -459,7 +460,7 @@ else
                 XSelected.Add(new object[] { matriceAgregee.Indicateurs[i], i });
 
                 // on rajoute les a^2 * VAR(Xi)
-                varExpliquee += Math.Pow(matriceAgregee.Indicateurs[i].BetaValueMR, 2) * matriceAgregee.Indicateurs[i].VarMR;
+                varExpliquee += Math.Pow(matriceAgregee.Indicateurs[i].BetaValueMR, 2) * matriceAgregee.Indicateurs[i].VarMR / nombrePoints;
             }
 
 
@@ -468,7 +469,7 @@ else
                 YSelected.Add(new object[] { matriceAgregee.Indicateurs[i], i });
 
                 // on rajoute les a^2 * VAR(Yi)
-                varY += Math.Pow(matriceAgregee.Indicateurs[i].Coefficient, 2) * matriceAgregee.Indicateurs[i].Variance;
+                varY += Math.Pow(matriceAgregee.Indicateurs[i].Coefficient, 2) * matriceAgregee.Indicateurs[i].Variance / nombrePoints;
             }
         }
 
@@ -482,7 +483,7 @@ else
                 Indicateur indJ = (Indicateur)XSelected[j][0];
 
                 // on rajoute les 2 * a * b * Cov(Xi, Xj)
-                varExpliquee += 2 * Table.matrThirteenStatic[(int)XSelected[i][1]][(int)XSelected[j][1]] * indI.BetaValueMR * indJ.BetaValueMR;
+                varExpliquee += 2 * Table.matrThirteenStatic[(int)XSelected[i][1]][(int)XSelected[j][1]] * indI.BetaValueMR * indJ.BetaValueMR/ nombrePoints;
             }
         }
 
@@ -496,12 +497,12 @@ else
                 Indicateur indJ = (Indicateur)YSelected[j][0];
 
                 // on rajoute les 2 * a * b * Cov(Yi, Yj)
-                varY += 2 * Table.matrThirteenStatic[(int)YSelected[i][1]][(int)YSelected[j][1]] * indI.Coefficient * indJ.Coefficient;
+                varY += 2 * Table.matrThirteenStatic[(int)YSelected[i][1]][(int)YSelected[j][1]] * indI.Coefficient * indJ.Coefficient/ nombrePoints;
 
             }
         }
 
-        RSquared = varY / varExpliquee;
+        RSquared = 1 - varExpliquee / varY;
 
         ExplainedRSquared = 1 - (1 - RSquared) * (matriceAgregee.NombrePoints - 1) / (matriceAgregee.NombrePoints - XSelected.Count - 1);
 
