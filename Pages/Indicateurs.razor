@@ -92,11 +92,9 @@ else
                                 <td>@(Math.Round(indicateur.VarSRModel * 10000) / 10000)</td>
                                 <td>@(Math.Round(indicateur.BetaValueMRModel * 10000) / 10000)</td>
                                 <td>@(Math.Round(indicateur.VarMRModel * 10000) / 10000)</td>
-                            </tr>
-}
+                            </tr>}
                     </tbody>
-                </table>
-}
+                </table>})
 
 @code { private MatriceR sousMatrice;
 
@@ -165,6 +163,7 @@ else
 
         if (add == null) { return null; }
 
+        Console.WriteLine("add is " + add);
 
         double[][] listX = null;
         double[][] listY = null, vecteurY = null;
@@ -204,6 +203,9 @@ else
         double[] varSRList = preVarSRList.ToArray();
 
         // On fait de même avec listX
+
+
+
         for (int j = 0; j < coordMatrixX.Count; j++)
         {
             listX[j] = new double[coordMatrixX.Count];
@@ -214,6 +216,7 @@ else
             }
         }
 
+
         double[][] xPrimeY = new double[coordMatrixX.Count][];
 
         // Intersection entre le vecteur Y et les X selectionnés
@@ -222,20 +225,58 @@ else
             xPrimeY[j] = new double[] { vecteurY[coordMatrixX[j]][0] };
         }
 
-        double[][] betaMRList = ModuleCalcul.MultiplicationMatrix(listX.Inverse(), xPrimeY);
-        double[][] varMRList = new double[betaMRList.GetLength(0)][];
+        // On va calculer les betaMR et varMR
+        double[][] betaMRList = ModuleCalcul.MultiplicationMatrix(listX.Inverse(), xPrimeY); ;
+        double[][] varMRList;
 
-        for (int j = 0; j < varMRList.GetLength(0); j++)
+        // Dans le cas où add == "Y", c'est qu'on calcule les valeurs betaSRModel et varSRModel
+        if (add == "Y")
         {
-            varMRList[j] = new double[betaMRList[0].GetLength(0)];
-            varMRList[j][0] = betaMRList[j][0] * vecteurY[coordMatrixX[j]][0];
+            Console.WriteLine("0");
+
+            listX = null;
+            listX = new double[coordMatrixX.Count][];
+
+            for (int j = 0; j < coordMatrixX.Count; j++)
+            {
+                listX[j] = Table.listCovariancesStatic[covIndex][coordMatrixX[j]];
+            }
+
+            listX = ModuleCalcul.MultiplicationMatrix(ModuleCalcul.TransposeMatrix(listX), betaMRList);
+            List<double[][]> modelSR = GetSRModel(matrix, vecteurY, coordMatrixX, coordMatrixY, tempList, listX, xPrimeY);
+
+            betaMRList = modelSR[0];
+            varMRList = modelSR[1];
+
+            Console.WriteLine("2");
+            Console.WriteLine("betaMR" + betaMRList.Length);
+            Console.WriteLine("varMR" + varMRList.Length);
+            Console.WriteLine();
+
         }
+
+        // Dans le cas contraire, on fait les calculs normaux
+        else
+        {
+            varMRList = new double[betaMRList.GetLength(0)][];
+
+            for (int j = 0; j < varMRList.GetLength(0); j++)
+            {
+                varMRList[j] = new double[betaMRList[0].GetLength(0)];
+                varMRList[j][0] = betaMRList[j][0] * vecteurY[coordMatrixX[j]][0];
+
+            }
+        }
+
+
 
 
         if (add != "")
         {
-            FillDataModel(matrix, coordMatrixX, coordMatrixY, listCoef, betaMRList, betaSRList, varMRList, varSRList, add, inde);
+            Console.WriteLine("4");
+            FillDataModel(matrix, coordMatrixX, coordMatrixY, listCoef, betaMRList, varMRList, add, inde);
         }
+
 
         else
         {
@@ -252,7 +293,7 @@ else
     }
 
 
-    private void FillData(MatriceR matrix, List<int>coordMatrixX, List<int>coordMatrixY, List<Indicateur>tempList,
+    private void FillData(MatriceR matrix, List<int> coordMatrixX, List<int> coordMatrixY, List<Indicateur> tempList,
         double[][] listCoef, double[][] betaMRList, double[] betaSRList, double[][] varMRList, double[] varSRList)
     {
         //Enfin, on ré-attribue les bonnes valeurs de betaValueSR et betaValueMR :
@@ -282,7 +323,8 @@ else
                 i++;
             }
 
-            // Si l'indicateur n'est pas pris comme X, on s'occupe de calculer betaMRModel et varMRModel
+            // Si l'indicateur n'est pas pris comme X, on s'occupe de calculer betaMRModel, varMRModel, betaSRModel
+            // et varSRModel
             else
             {
                 matrix.Indicateurs[j].IsChecked = false;
@@ -291,6 +333,8 @@ else
                 coordMatrixX.Add(j);
                 coordMatrixX.Sort();
                 CalculData(matrix, coordMatrixX, coordMatrixY, tempList, "X", j);
+                Console.WriteLine("Computing SRModel values \n");
+                CalculData(matrix, coordMatrixX, coordMatrixY, tempList, "Y", j);
                 coordMatrixX.Remove(j);
 
             }
@@ -316,28 +360,45 @@ else
         }
     }
 
-    private void FillDataModel(MatriceR matrix, List<int>coordMatrixX, List<int>coordMatrixY, double[][] listCoef,
-        double[][] betaMRList, double[] betaSRList, double[][] varMRList, double[] varSRList, string type, int inde)
+    private void FillDataModel(MatriceR matrix, List<int> coordMatrixX, List<int> coordMatrixY, double[][] listCoef,
+        double[][] betaMRList, double[][] varMRList, string type, int inde)
     {
-        switch (type) {
+
+        Console.WriteLine("Model");
+        switch (type)
+        {
+
 
             // cas des Multi Reg
             case "X":
 
+                Console.WriteLine("X");
+
                 int posMR = coordMatrixX.IndexOf(inde);
+
+                Console.WriteLine("posMR: " + posMR);
+                Console.WriteLine("betaMRList: " + betaMRList.Length);
+                Console.WriteLine("varMRList: " + varMRList.Length);
 
                 matrix.Indicateurs[inde].BetaValueMRModel = betaMRList[posMR][0];
                 matrix.Indicateurs[inde].VarMRModel = varMRList[posMR][0];
+
+                Console.WriteLine("ended \n");
 
                 break;
 
             // cas des Single Reg
             case "Y":
 
-                int posSR = coordMatrixY.IndexOf(inde);
+                int posSR = coordMatrixX.IndexOf(inde);
 
-                matrix.Indicateurs[inde].BetaValueSRModel = betaSRList[posSR];
-                matrix.Indicateurs[inde].VarSRModel = varSRList[posSR];
+                Console.WriteLine("posSR: " + posSR);
+                Console.WriteLine("betaMRList: " + betaMRList.Length);
+                Console.WriteLine("varMRList: " + varMRList.Length);
+
+
+                matrix.Indicateurs[inde].BetaValueSRModel = betaMRList[posSR][0];
+                matrix.Indicateurs[inde].VarSRModel = varMRList[posSR][0];
 
                 break;
 
@@ -347,14 +408,32 @@ else
 
     }
 
-
-
-    public double GetVarY(double[][] subMatrixY, double[][] listCoef)
+    private List<double[][]> GetSRModel(MatriceR matrix, double[][] vecteurY, List<int> coordMatrixX, List<int> coordMatrixY, List<Indicateur> tempList, double[][] listX, double[][] xPrimeY)
     {
-        return ModuleCalcul.MultiplicationMatrix(ModuleCalcul.MultiplicationMatrix(
-        ModuleCalcul.TransposeMatrix(listCoef), subMatrixY),
-        listCoef)[0][0];
+
+        foreach (double[] a in listX)
+        {
+            foreach(double b in a)
+            {
+                Console.Write(b + "     ");
+            }
+            Console.WriteLine();
+        }
+        Console.WriteLine("ok");
+        double[][] betaMRList = ModuleCalcul.MultiplicationMatrix(listX.Inverse(), xPrimeY);
+        Console.WriteLine("plus ok");
+        double[][] varMRList = new double[betaMRList.GetLength(0)][];
+
+        for (int j = 0; j < varMRList.GetLength(0); j++)
+        {
+            varMRList[j] = new double[betaMRList[0].GetLength(0)];
+            varMRList[j][0] = betaMRList[j][0] * vecteurY[coordMatrixX[j]][0];
+
+        }
+
+        return new List<double[][]>() { betaMRList, varMRList };
     }
+
 
     private void Compute()
     {
