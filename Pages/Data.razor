@@ -6,6 +6,7 @@
 @using System.Text;
 @using System.IO;
 @using System.Globalization;
+@using Accord.Math; 
 
 <h1>Covariance matrix of the agregated matrix</h1>
 @if (matrice == null)
@@ -28,7 +29,7 @@ else
         <tr>
             @foreach (var dataPoint in dataLine)
             {
-<td style="text-align:center">@dataPoint</td>}
+<td style="text-align:center">@(Math.Round((dataPoint / Table.matrixListStatic.Last().NombrePoints) * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>}
         </tr>}
                         <tr style="border-top-style:dashed;text-align:center">
                             <td style="text-align:center;font-style:italic;font-size:21px;column-span:all;align-content:center">
@@ -38,7 +39,7 @@ else
                         <tr style="border-top-style:dashed;border-bottom-style:dashed">
                             @foreach (var point in matrice.SigmaX)
                             {
-            <td style="text-align:center">@point </td>}
+                            <td style="text-align:center">@(Math.Round((point / Table.matrixListStatic.Last().NombrePoints) * Math.Pow(10, NavMenu.rounding + 1)) / Math.Pow(10, NavMenu.rounding + 1)) </td>}
                         </tr>
                     </tbody>
                 </table>
