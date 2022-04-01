@@ -27,7 +27,7 @@
 
 @code {
     private bool collapseNavMenu = true;
-
+    public static int nbArrondie = 2; 
     private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
     private void ToggleNavMenu()
@@ -38,5 +38,5 @@
     // cette variable n'est utile que lors de la première exécution. Elle permet de charger les matrices
     public static bool firstTime = true;
 
-    public static int rounding = 2;
+    public static int rounding = nbArrondie;
 }

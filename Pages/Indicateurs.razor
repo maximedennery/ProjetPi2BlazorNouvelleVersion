@@ -11,90 +11,93 @@
 
 
 <h1>Indicateurs</h1>
-
+<input id="txtWord" type="number" name="Round" placeholder="Set a value" @bind="@NavMenu.nbArrondie" style="width:50px ;" />
+<input type="button" onclick=location.reload() value="Refresh"/>
 @if (Table.matrixListStatic[0] == null)
 {
-<p><em>Loading...</em></p> }
+    <p><em>Loading...</em></p> }
 else
 {
-// Affichage de la table
-<table class="table">
-    <thead>
-        <tr>
-            <th>Variance de Y</th>
-            <th>Variance expliquee</th>
-            <th>R squared</th>
-            <th>adjusted R squared</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>@(Math.Round(varY * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
-            <td>@(Math.Round(varExpliquee * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
-            <td>@(Math.Round(RSquared * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
-            <td>@(Math.Round(ExplainedRSquared * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
-        </tr>
-    </tbody>
-</table> //On a le boutton Proceed qui permet d'avoir les vecteurs X et Y
-<button @onclick="@ProceedButton">Proceed</button>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Check</th>
-                            <th>Center</th>
-                            <th>Name</th>
-                            <th>Selected</th>
-                            <th>Mean</th>
-                            <th>Var</th>
-                            <th>Coef</th>
-                            <th>BetaSR</th>
-                            <th>VarSR</th>
-                            <th>BetaMR</th>
-                            <th>VarMR</th>
-                            <th>Model BetaSR</th>
-                            <th>Model VarSR</th>
-                            <th>Model BetaMR</th>
-                            <th>Model VarMR</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var indicateur in Table.matrixListStatic.Last().Indicateurs)
-                        {
-                            // On check si la valeur du coefficient est égale à 0, auquel cas on désactive la checkbox et l'indicateur a la propriété IsChecked à false
-        @if (Convert.ToDouble(indicateur.Coefficient) != 0.0) { indicateur.IsChecked = false; checkIsDisable = true; isChecked = false; }
-        else if (!indicateur.IsChecked) { checkIsDisable = false; isChecked = false; }
-        else { checkIsDisable = false; isChecked = true; }
+    // Affichage de la table
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Variance de Y</th>
+                <th>Variance expliquee</th>
+                <th>R squared</th>
+                <th>adjusted R squared</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>@(Math.Round(varY * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
+                <td>@(Math.Round(varExpliquee * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
+                <td>@(Math.Round(RSquared * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
+                <td>@(Math.Round(RSquaredAjusted * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
+            </tr>
+        </tbody>
+    </table> //On a le boutton Proceed qui permet d'avoir les vecteurs X et Y
+    <button @onclick="@ProceedButton">Proceed</button>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Check</th>
+                <th>Center</th>
+                <th>Name</th>
+                <th>Selected</th>
+                <th>Mean</th>
+                <th>Var</th>
+                <th>Coef</th>
+                <th>BetaSR</th>
+                <th>VarSR</th>
+                <th>BetaMR</th>
+                <th>VarMR</th>
+                <th>Model BetaSR</th>
+                <th>Model VarSR</th>
+                <th>Model BetaMR</th>
+                <th>Model VarMR</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var indicateur in Table.matrixListStatic.Last().Indicateurs)
+            {
+                // On check si la valeur du coefficient est égale à 0, auquel cas on désactive la checkbox et l'indicateur a la propriété IsChecked à false
+                @if (Convert.ToDouble(indicateur.Coefficient) != 0.0) { indicateur.IsChecked = false; checkIsDisable = true; isChecked = false; }
+                else if (!indicateur.IsChecked) { checkIsDisable = false; isChecked = false; }
+                else { checkIsDisable = false; isChecked = true; }
+                
+                <tr>
+                    <td>
+                        <input type="checkbox" id="checked" name="checked" checked="@isChecked" disabled="@checkIsDisable" @onchange="eventArgs => { CheckboxClicked1(indicateur, eventArgs.Value); }">
+                    </td>
+                    <td>
+                        <input type="checkbox" id="scales" name="scales" @onchange="eventArgs => { CheckboxClicked2(indicateur, eventArgs.Value); }">
+                    </td>
+                    <td>@indicateur.Nom</td>
 
-                            <tr>
-                                <td>
-                                    <input type="checkbox" id="checked" name="checked" checked="@isChecked" disabled="@checkIsDisable" @onchange="eventArgs => { CheckboxClicked1(indicateur, eventArgs.Value); }">
-                                </td>
-                                <td>
-                                    <input type="checkbox" id="scales" name="scales" @onchange="eventArgs => { CheckboxClicked2(indicateur, eventArgs.Value); }">
-                                </td>
-                                <td>@indicateur.Nom</td>
+                    <!-- Displaying properly if the indicator is checked or not ("Yes" or "No") -->
+                    <td>@{string val = indicateur.IsChecked ? "Yes" : "No";} @val</td>
 
-                                <!-- Displaying properly if the indicator is checked or not ("Yes" or "No") -->
-                                <td>@{string val = indicateur.IsChecked ? "Yes" : "No";} @val</td>
-
-                                <td @onmousemove="@(e => fullNumber = indicateur.Moyenne)">@(Math.Round(indicateur.Moyenne * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
-                                <td @onmousemove="@(e => fullNumber = indicateur.Variance)">@(Math.Round(indicateur.Variance * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
-                                <td>
-                                    <input id="txtWord" type="number" name="txtWord" placeholder="Set a value" @bind="@indicateur.Coefficient" style="width:50px;" />
-                                </td>
-                                <td>@(Math.Round(indicateur.BetaValueSR * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
-                                <td>@(Math.Round(indicateur.VarSR * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
-                                <td>@(Math.Round(indicateur.BetaValueMR * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
-                                <td>@(Math.Round(indicateur.VarMR * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
+                    <td @onmousemove="@(e => fullNumber = indicateur.Moyenne)">@(Math.Round(indicateur.Moyenne * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
+                    <td @onmousemove="@(e => fullNumber = indicateur.Variance)">@(Math.Round(indicateur.Variance * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
+                    <td>
+                        <input id="txtWord" type="number" name="txtWord" placeholder="Set a value" @bind="@indicateur.Coefficient" style="width:50px;" />
+                    </td>
+                    <td>@(Math.Round(indicateur.BetaValueSR * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
+                    <td>@(Math.Round(indicateur.VarSR * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
+                    <td>@(Math.Round(indicateur.BetaValueMR * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
+                    <td>@(Math.Round(indicateur.VarMR * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
 
 
-                                <td>@(Math.Round(indicateur.BetaValueSRModel * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
-                                <td>@(Math.Round(indicateur.VarSRModel * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
-                                <td>@(Math.Round(indicateur.BetaValueMRModel * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
-                                <td>@(Math.Round(indicateur.VarMRModel * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
-                            </tr>}
-                    </tbody>
-                </table>})
+                    <td>@(Math.Round(indicateur.BetaValueSRModel * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
+                    <td>@(Math.Round(indicateur.VarSRModel * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
+                    <td>@(Math.Round(indicateur.BetaValueMRModel * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
+                    <td>@(Math.Round(indicateur.VarMRModel * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+})
 
 @code { private MatriceR sousMatrice;
 
@@ -106,10 +109,11 @@ else
     private double varY;
     private double varExpliquee;
     private double RSquared;
-    private double ExplainedRSquared;
+    private double RSquaredAjusted;
 
     List<double[][]> grandX = new List<double[][]>();
     int covIndex;
+
 
     private void onChange(Microsoft.AspNetCore.Components.ChangeEventArgs args)
     {
@@ -128,6 +132,7 @@ else
     }
 
 
+
     /// <summary>
     /// fonction qui permet d'avoir les vecteurs X et Y, le grand X, ainsi que les betaMR et betaSR
     /// </summary>
@@ -140,7 +145,7 @@ else
         int i = 0;
         covIndex = 0;
 
-        // On commence par remplir les liste contenant les coordonnées des vecteurs X et Y sélcectionnés. tempList sert pour connaître les coefficients entrés par l'utiilisateur.
+        // On commence par remplir les listes contenant les coordonnées des vecteurs X et Y sélcectionnés. tempList sert pour connaître les coefficients entrés par l'utiilisateur.
         foreach (Indicateur indicateur in Table.matrixListStatic.Last().Indicateurs)
         {
             if (indicateur.IsChecked) { coordMatrixX.Add(i); }
@@ -161,6 +166,8 @@ else
         Table.matrixListStatic.Last().Indicateurs.Sort((x, y) => y.BetaValueSR.CompareTo(x.BetaValueSR));
     }
     int nombrePoints = Table.matrixListStatic.Last().NombrePoints;
+
+
     private double[][] CalculData(MatriceR matrix, List<int> coordMatrixX, List<int> coordMatrixY, List<Indicateur> tempList, string add = "", int inde = -1)
     {
 
@@ -186,6 +193,7 @@ else
         // enfin, on obtient le vecteur Y :
         vecteurY = ModuleCalcul.MultiplicationMatrix(ModuleCalcul.TransposeMatrix(listY), listCoef);
 
+
         // on peut donc calculer les betaSR
         // on utilise une List car on va utiliser la propriété Add (plus pratique qu'un array)
         List<double> preBetaSRList = new List<double>();
@@ -197,7 +205,7 @@ else
             if (!coordMatrixY.Contains(j))
             {
                 preBetaSRList.Add(vecteurY[j][0] / Table.listCovariancesStatic[covIndex][j][j]);
-                preVarSRList.Add((vecteurY[j][0] / Table.listCovariancesStatic[covIndex][j][j]) * vecteurY[j][0]/ nombrePoints);
+                preVarSRList.Add((vecteurY[j][0] / Table.listCovariancesStatic[covIndex][j][j]) * vecteurY[j][0] / nombrePoints);
             }
         }
 
@@ -205,8 +213,6 @@ else
         double[] varSRList = preVarSRList.ToArray();
 
         // On fait de même avec listX
-
-
 
         for (int j = 0; j < coordMatrixX.Count; j++)
         {
@@ -219,6 +225,7 @@ else
         }
 
 
+
         double[][] xPrimeY = new double[coordMatrixX.Count][];
 
         // Intersection entre le vecteur Y et les X selectionnés
@@ -226,9 +233,21 @@ else
         {
             xPrimeY[j] = new double[] { vecteurY[coordMatrixX[j]][0] };
         }
-
+        Console.WriteLine("étape1");
         // On va calculer les betaMR et varMR
-        double[][] betaMRList = ModuleCalcul.MultiplicationMatrix(listX.Inverse(), xPrimeY); ;
+        double[][] betaMRList = ModuleCalcul.MultiplicationMatrix(listX.Inverse(), xPrimeY);
+        Console.WriteLine("étape2");
+        double[][] vecteurX = ModuleCalcul.MultiplicationMatrix(listX, betaMRList);   // vecteur ligne
+        Console.WriteLine("étape3");
+        double[][] matrixXBeta = ModuleCalcul.MultiplicationMatrix(betaMRList, listX);
+        Console.WriteLine("étape4");
+        //double[][] betaSRModelList = ModuleCalcul.MultiplicationMatrix(matrixXBeta.Inverse(), xPrimeY);    // voila ou est le probleme 
+        double[][] betaSRModelList = ModuleCalcul.MultiplicationMatrix(matrixXBeta, xPrimeY);       
+        Console.WriteLine("étape5");
+        //variance expliquee: transpose du vecteur des betas * matrice de  covariance des X fois vecteur des betas: 1 ligne n colonnes * (n*n) 8 (1 colonne n lignes)
+        double[][] varianceExplicated = ModuleCalcul.MultiplicationMatrix(ModuleCalcul.TransposeMatrix(betaMRList), vecteurX); // vecteur colonne fois vecteur ligne = scalaire
+        double varExpliquee = varianceExplicated[0][0];
+
         double[][] varMRList;
 
         // Dans le cas où add == "Y", c'est qu'on calcule les valeurs betaSRModel et varSRModel
@@ -259,30 +278,65 @@ else
             for (int j = 0; j < varMRList.GetLength(0); j++)
             {
                 varMRList[j] = new double[betaMRList[0].GetLength(0)];
-                varMRList[j][0] = betaMRList[j][0] * vecteurY[coordMatrixX[j]][0]/ nombrePoints;
+                varMRList[j][0] = betaMRList[j][0] * vecteurY[coordMatrixX[j]][0] / nombrePoints;
 
             }
         }
 
-
-
-
         if (add != "")
         {
-            Console.WriteLine("4");
-            FillDataModel(matrix, coordMatrixX, coordMatrixY, listCoef, betaMRList, varMRList, add, inde);
+            FillDataModel(matrix, coordMatrixX, coordMatrixY, listCoef, betaMRList, varMRList, add, inde, betaSRModelList);
         }
-
 
         else
         {
             FillData(matrix, coordMatrixX, coordMatrixY, tempList, listCoef, betaMRList, betaSRList, varMRList, varSRList);
         }
 
+        grandX.Add(ModuleCalcul.MultiplicationMatrix(listX, betaMRList));  // à enlevercar c'est déjà vecteurX
 
-        grandX.Add(ModuleCalcul.MultiplicationMatrix(listX, betaMRList));
+        List<object[]> XSelected = new List<object[]>();
+        List<object[]> YSelected = new List<object[]>();
 
-        Compute();
+        // on initialise les variances (variance des Y et variance expliquée)
+
+        varExpliquee = 0.0;
+
+        #region calcul de la variance totale varY
+
+        varY = 0.0;
+        // La matrice agregée est la dernière MatriceR de matrixListStatic
+
+        MatriceR matriceAgregee = Table.matrixListStatic.Last();
+
+        for (int i = 0; i < matriceAgregee.Indicateurs.Count; i++)
+        {
+            if (matriceAgregee.Indicateurs[i].Coefficient != 0.0 && matriceAgregee.Indicateurs[i].IsChecked == false)
+            {
+                YSelected.Add(new object[] { matriceAgregee.Indicateurs[i], i });
+
+                // on rajoute les a^2 * VAR(Yi)
+                varY += Math.Pow(matriceAgregee.Indicateurs[i].Coefficient, 2) * matriceAgregee.Indicateurs[i].Variance / nombrePoints;
+            }
+        }
+        for (int i = 0; i < YSelected.Count - 1; i++)
+        {
+            Indicateur indI = (Indicateur)YSelected[i][0];
+            for (int j = i; j < YSelected.Count; j++)
+            {
+
+                Indicateur indJ = (Indicateur)YSelected[j][0];
+
+                // on rajoute les 2 * a * b * Cov(Yi, Yj)
+                varY += 2 * Table.matrThirteenStatic[(int)YSelected[i][1]][(int)YSelected[j][1]] * indI.Coefficient * indJ.Coefficient / nombrePoints;
+
+            }
+        }
+        #endregion  varY
+
+        RSquared = varExpliquee / varY;
+
+        RSquaredAjusted = 1 - (1 - RSquared) * (matriceAgregee.NombrePoints - 1) / (matriceAgregee.NombrePoints - XSelected.Count - 1);
 
 
         return null;
@@ -334,7 +388,6 @@ else
                     coordMatrixX.Add(j);
                     coordMatrixX.Sort();
                     CalculData(matrix, coordMatrixX, coordMatrixY, tempList, "X", j);
-                    Console.WriteLine("Computing SRModel values \n");
                     CalculData(matrix, coordMatrixX, coordMatrixY, tempList, "Y", j);
                     coordMatrixX.Remove(j);
                 }
@@ -360,12 +413,9 @@ else
             }
         }
     }
-
     private void FillDataModel(MatriceR matrix, List<int> coordMatrixX, List<int> coordMatrixY, double[][] listCoef,
-        double[][] betaMRList, double[][] varMRList, string type, int inde)
+        double[][] betaMRList, double[][] varMRList, string type, int inde, double[][] betaSRModelList)
     {
-
-        Console.WriteLine("Model");
         switch (type)
         {
 
@@ -377,14 +427,14 @@ else
 
                 int posMR = coordMatrixX.IndexOf(inde);
 
-                Console.WriteLine("posMR: " + posMR);
-                Console.WriteLine("betaMRList: " + betaMRList.Length);
-                Console.WriteLine("varMRList: " + varMRList.Length);
+                //Console.WriteLine("posMR: " + posMR);
+                //Console.WriteLine("betaMRList: " + betaMRList.Length);
+                //Console.WriteLine("varMRList: " + varMRList.Length);
 
                 matrix.Indicateurs[inde].BetaValueMRModel = betaMRList[posMR][0];
                 matrix.Indicateurs[inde].VarMRModel = varMRList[posMR][0];
 
-                Console.WriteLine("ended \n");
+                //Console.WriteLine("ended \n");
 
                 break;
 
@@ -393,12 +443,13 @@ else
 
                 int posSR = coordMatrixX.IndexOf(inde);
 
-                Console.WriteLine("posSR: " + posSR);
-                Console.WriteLine("betaMRList: " + betaMRList.Length);
-                Console.WriteLine("varMRList: " + varMRList.Length);
+                //Console.WriteLine("posSR: " + posSR);
+                //Console.WriteLine("betaMRList: " + betaMRList.Length);
+                //Console.WriteLine("varMRList: " + varMRList.Length);
 
 
-                matrix.Indicateurs[inde].BetaValueSRModel = betaMRList[posSR][0];
+                //matrix.Indicateurs[inde].BetaValueSRModel = betaMRList[posSR][0];      //et laaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+                matrix.Indicateurs[inde].BetaValueSRModel = betaSRModelList[posSR][0];
                 matrix.Indicateurs[inde].VarSRModel = varMRList[posSR][0];
 
                 break;
@@ -431,86 +482,15 @@ else
         for (int j = 0; j < varMRList.GetLength(0); j++)
         {
             varMRList[j] = new double[betaMRList[0].GetLength(0)];
-            varMRList[j][0] = betaMRList[j][0] * vecteurY[coordMatrixX[j]][0]/nombrePoints;
+            varMRList[j][0] = betaMRList[j][0] * vecteurY[coordMatrixX[j]][0] / nombrePoints;
 
         }
 
         return new List<double[][]>() { betaMRList, varMRList };
-    }
+    }  // cette méthode à revoir
 
 
-    private void Compute()
-    {
-        // Ces deux listes nous aideront à calculer les variances. Les éléments sont des listes de type Object, qui
-        // sont toutes de longueur égale à 2. Le premier élément est de type Indicateur et représente l' indicateur
-        // sélectionné en tant que X ou que Y (en fonction des cas). Le second élément est l'indice de cet
-        // indicateur, que l'on réutilisera pour trouver la covariance des indicateurs deux à deux (à l'aide de la
-        // variable listCovariancesStatic).
-        List<object[]> XSelected = new List<object[]>();
-        List<object[]> YSelected = new List<object[]>();
 
-        // on initialise les variances (variance des Y et variance expliquée)
-        varY = 0.0;
-        varExpliquee = 0.0;
-
-        // La matrice agregée est la dernière MatriceR de matrixListStatic
-
-        MatriceR matriceAgregee = Table.matrixListStatic.Last();
-
-        for (int i = 0; i < matriceAgregee.Indicateurs.Count; i++)
-        {
-            if (matriceAgregee.Indicateurs[i].IsChecked)
-            {
-                XSelected.Add(new object[] { matriceAgregee.Indicateurs[i], i });
-
-                // on rajoute les a^2 * VAR(Xi)
-                varExpliquee += Math.Pow(matriceAgregee.Indicateurs[i].BetaValueMR, 2) * matriceAgregee.Indicateurs[i].VarMR / nombrePoints;
-            }
-
-
-            else if (matriceAgregee.Indicateurs[i].Coefficient != 0.0)
-            {
-                YSelected.Add(new object[] { matriceAgregee.Indicateurs[i], i });
-
-                // on rajoute les a^2 * VAR(Yi)
-                varY += Math.Pow(matriceAgregee.Indicateurs[i].Coefficient, 2) * matriceAgregee.Indicateurs[i].Variance / nombrePoints;
-            }
-        }
-
-
-        for (int i = 0; i < XSelected.Count - 1; i++)
-        {
-            Indicateur indI = (Indicateur)XSelected[i][0];
-            for (int j = i; j < XSelected.Count; j++)
-            {
-
-                Indicateur indJ = (Indicateur)XSelected[j][0];
-
-                // on rajoute les 2 * a * b * Cov(Xi, Xj)
-                varExpliquee += 2 * Table.matrThirteenStatic[(int)XSelected[i][1]][(int)XSelected[j][1]] * indI.BetaValueMR * indJ.BetaValueMR/ nombrePoints;
-            }
-        }
-
-
-        for (int i = 0; i < YSelected.Count - 1; i++)
-        {
-            Indicateur indI = (Indicateur)YSelected[i][0];
-            for (int j = i; j < YSelected.Count; j++)
-            {
-
-                Indicateur indJ = (Indicateur)YSelected[j][0];
-
-                // on rajoute les 2 * a * b * Cov(Yi, Yj)
-                varY += 2 * Table.matrThirteenStatic[(int)YSelected[i][1]][(int)YSelected[j][1]] * indI.Coefficient * indJ.Coefficient/ nombrePoints;
-
-            }
-        }
-
-        RSquared = 1 - varExpliquee / varY;
-
-        ExplainedRSquared = 1 - (1 - RSquared) * (matriceAgregee.NombrePoints - 1) / (matriceAgregee.NombrePoints - XSelected.Count - 1);
-
-    }
 
     public static void CheckboxClicked1(Indicateur selected, object CheckedValue)
     {
