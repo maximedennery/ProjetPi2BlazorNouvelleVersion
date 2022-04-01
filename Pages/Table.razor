@@ -90,7 +90,7 @@
                     Nom = matrixList[i].Indicateurs[i].Nom,
                     IsChecked = false,
                     Moyenne = vectorSum[i] / pointSum,
-                    Variance = matrThirteen[i][i],
+                    Variance = matrThirteen[i][i] / pointSum,
                     Coefficient = 0.0,
                     BetaValueMR = 0.0,
                     BetaValueSR = 0.0,
@@ -180,7 +180,7 @@
 
             i++;
         }
-
+        Console.WriteLine("nombre point = " + nombrePoints);
         return new MatriceR
         {
             Indicateurs = indicateurs,
