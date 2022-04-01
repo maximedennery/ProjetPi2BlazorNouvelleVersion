@@ -241,7 +241,7 @@ else
         Console.WriteLine("étape3");
         double[][] matrixXBeta = ModuleCalcul.MultiplicationMatrix(betaMRList, listX);
         Console.WriteLine("étape4");
-        //double[][] betaSRModelList = ModuleCalcul.MultiplicationMatrix(matrixXBeta.Inverse(), xPrimeY);    // voila ou est le probleme 
+        //double[][] betaSRModelList = ModuleCalcul.MultiplicationMatrix(matrixXBeta.Inverse(), xPrimeY);    // voila ou est le probleme à cause de INVERSE 
         double[][] betaSRModelList = ModuleCalcul.MultiplicationMatrix(matrixXBeta, xPrimeY);       
         Console.WriteLine("étape5");
         //variance expliquee: transpose du vecteur des betas * matrice de  covariance des X fois vecteur des betas: 1 ligne n colonnes * (n*n) 8 (1 colonne n lignes)
