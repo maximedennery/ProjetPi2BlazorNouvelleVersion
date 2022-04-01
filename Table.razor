@@ -1,0 +1,200 @@
+@page "/"
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@using System;
+@using System.Diagnostics;
+@using System.Collections.Generic;
+@using System.Text;
+@using System.IO;
+@using System.Globalization;
+@using Accord.Math;
+
+
+
+<h1>Main Page</h1>
+<h2>Welcome on the main page!</h2>
+<h5>This software makes it possible to identify an economical model explaining the variation of a variable of interest, to study the robustness of this model, and finally to refine the model to take into account the constraints reflecting the desired financial concepts.</h5>
+<h3>   </h3>
+<h3>   </h3>
+<h2>Please upload the files</h2>
+<input type="file" name="file" webkitdirectory />
+
+
+@code {
+    private double[][] matrThirteen;
+    private List<MatriceR> matrixList;
+    List<double[][]> listCovariances;
+
+    public static double[][] matrThirteenStatic;
+    public static List<MatriceR> matrixListStatic;
+    public static List<double[][]> listCovariancesStatic;
+
+
+
+
+    /// <summary>
+    /// Méthode qui s'exécute au lancement de la page. Elle permet d'initialiser les variables statiques contenant les
+    /// informations de la 13ème matrice, de la liste des matrices (par mois) et de la liste des matrices de covariance
+    /// </summary>
+    /// <returns></returns>
+    protected override async Task OnInitializedAsync()
+    {
+        // On ne rentre dans ce if que lors de la toute première exécution du code. Cela permet d'éviter de refaire plusieurs
+        // fois les mêmes calculs et évite le reset des data lors d'un changement de page
+        if (NavMenu.firstTime)
+        {
+            matrixList = new List<MatriceR>();
+            listCovariances = new List<double[][]>();
+            string num, temp;
+
+            temp = await Http.GetStringAsync("sample-data/201901.csv");
+
+
+            MatriceR dataImport = DataImport(temp);
+            matrixList.Add(dataImport);
+
+
+            double[][] matrixSum = dataImport.SigmaXY;
+            double[] vectorSum = dataImport.SigmaX;
+            int pointSum = dataImport.NombrePoints;
+
+
+            listCovariances.Add(ModuleCalcul.covarianceMatrix(matrixSum, vectorSum, matrixSum.GetLength(0)));
+
+
+            MatriceR mat;
+
+
+            for (int i = 2; i <= 12; i++)
+            {
+                num = "";
+                if (i < 10) num = "0";
+
+                temp = await Http.GetStringAsync("sample-data/2019" + num + i.ToString() + ".csv");
+                mat = DataImport(temp);
+                matrixList.Add(mat);
+                pointSum += mat.NombrePoints;
+
+                matrixSum = ModuleCalcul.Addition(matrixSum, mat.SigmaXY);
+                vectorSum = ModuleCalcul.AdditionVecteurs(vectorSum, mat.SigmaX);
+
+                listCovariances.Add(ModuleCalcul.covarianceMatrix(mat.SigmaXY, mat.SigmaX, mat.SigmaXY.GetLength(0)));
+            }
+
+            listCovariances.Add(ModuleCalcul.covarianceMatrix(matrixSum, vectorSum, matrixSum.GetLength(0)));
+            matrThirteen = listCovariances.Last();
+
+
+            List<Indicateur> indicateurs = new List<Indicateur>();
+
+            for (int i = 0; i < matrixList[0].Indicateurs.Count; i++)
+            {
+                indicateurs.Add(new Indicateur
+                {
+                    Nom = matrixList[i].Indicateurs[i].Nom,
+                    IsChecked = false,
+                    Moyenne = vectorSum[i] / pointSum,
+                    Variance = matrThirteen[i][i] / pointSum,
+                    Coefficient = 0.0,
+                    BetaValueMR = 0.0,
+                    BetaValueSR = 0.0,
+                    VarMR = 0.0,
+                    VarSR = 0.0
+                });
+            }
+
+
+            matrixList.Add(new MatriceR
+            {
+                Indicateurs = indicateurs,
+                SigmaXY = matrixSum,
+                SigmaX = vectorSum,
+                Covariance = matrThirteen,
+                NombrePoints = pointSum
+            });
+
+
+
+            NavMenu.firstTime = false;
+
+            matrThirteenStatic = this.matrThirteen;
+            matrixListStatic = this.matrixList;
+            listCovariancesStatic = this.listCovariances;
+        }
+
+    }
+
+    /// <summary>
+    /// Fonction qui permet d'importer toutes les données d'un fichier
+    /// </summary>
+    /// <param name="content">Nom du fichier</param>
+    /// <returns></returns>
+    private MatriceR DataImport(string content)
+    {
+        var format = new NumberFormatInfo() { NegativeSign = "-", NumberDecimalSeparator = "." };
+        int nombrePoints = 0;
+        List<double> sigmaX_doubles = new List<double>();
+        List<Indicateur> indicateurs = new List<Indicateur>();
+        List<List<double>> sigmaXY_doubles = new List<List<double>>();
+
+
+        // Mise au propre des données
+        string[] lines = content.Split('\n');
+        List<string> final_lines = new List<string>();
+        foreach (string line in lines) if (line.Trim() != "\n" && line.Trim() != null && line.Trim() != "") final_lines.Add(line);
+
+        // Get nombre de points (dernière ligne => -1)
+        nombrePoints = Convert.ToInt32(final_lines[final_lines.Count - 1]);
+
+        // Get SigmaX (avant-dernière ligne => -2)
+        string[] sigmaX_strings = final_lines[final_lines.Count - 2].Split(',');
+        foreach (string sig in sigmaX_strings) sigmaX_doubles.Add(Convert.ToDouble(sig, format));
+        double[] sigmaX_doubles_array = sigmaX_doubles.ToArray();
+
+        // Get Indicateurs (première ligne => 0)
+        string[] columns = final_lines[0].Split(',');
+        foreach (string indicateur in columns)
+        {
+            indicateurs.Add(new Indicateur { Nom = indicateur.Trim('"').Trim('"'), IsChecked = false });
+        }
+
+
+        // Get les données (deuxième ligne jusqu'à l'avant avant dernière ligne => 1 to -3)
+        foreach (string dataLine in final_lines.GetRange(1, final_lines.Count - 3))
+        {
+            List<Double> listLigne = new List<double>();
+            foreach (string dataPoint in dataLine.Split(',')) listLigne.Add(Convert.ToDouble(dataPoint, format));
+            sigmaXY_doubles.Add(listLigne);
+        }
+        double[][] sigmaXY_doubles_array = sigmaXY_doubles.Select(value => value.ToArray()).ToArray();
+
+        // Initialisation de la matrice de covariance associée
+        double[][] covariance = ModuleCalcul.covarianceMatrix(sigmaXY_doubles_array, sigmaX_doubles_array, nombrePoints);
+
+
+        // ici on doit initialiser les moyennes et variance des indicateurs
+        int i = 0;
+        //int taille = indicateurs.Count;
+        foreach (Indicateur indicateur in indicateurs)
+        {
+            //indicateur.Moyenne = sigmaX_doubles_array[i] / taille;
+            indicateur.Moyenne = sigmaX_doubles_array[i] / nombrePoints;     // initialisation des moyennes
+
+            indicateur.Variance = covariance[i][i] / nombrePoints;       // initialisation des variances
+
+            i++;
+        }
+        Console.WriteLine("nombre point = " + nombrePoints);
+        return new MatriceR
+        {
+            Indicateurs = indicateurs,
+            SigmaXY = sigmaXY_doubles_array,
+            SigmaX = sigmaX_doubles_array,
+            NombrePoints = nombrePoints,
+            Covariance = covariance
+        };
+    }
+
+
+
+}
