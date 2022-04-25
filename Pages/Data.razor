@@ -6,7 +6,7 @@
 @using System.Text;
 @using System.IO;
 @using System.Globalization;
-@using Accord.Math; 
+@using Accord.Math;
 
 <h1>Covariance matrix of the agregated matrix</h1>
 @if (matrice == null)
@@ -20,7 +20,8 @@ else
                         <tr>
                             @foreach (var indicateur in matrice.Indicateurs)
                             {
-            <th style="text-align:center">@indicateur.Nom</th>}
+            <th style="text-align:center">@indicateur.Nom</th>
+}
                         </tr>
                     </thead>
                     <tbody>
@@ -29,8 +30,10 @@ else
         <tr>
             @foreach (var dataPoint in dataLine)
             {
-<td style="text-align:center">@(Math.Round((dataPoint / Table.matrixListStatic.Last().NombrePoints) * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>}
-        </tr>}
+<td style="text-align:center">@(Math.Round((dataPoint / Table.matrixListStatic.Last().NombrePoints) * Math.Pow(10, NavMenu.rounding)) / Math.Pow(10, NavMenu.rounding))</td>
+}
+        </tr>
+}
                         <tr style="border-top-style:dashed;text-align:center">
                             <td style="text-align:center;font-style:italic;font-size:21px;column-span:all;align-content:center">
                                 Sigma X
@@ -39,17 +42,18 @@ else
                         <tr style="border-top-style:dashed;border-bottom-style:dashed">
                             @foreach (var point in matrice.SigmaX)
                             {
-                            <td style="text-align:center">@(Math.Round((point / Table.matrixListStatic.Last().NombrePoints) * Math.Pow(10, NavMenu.rounding + 1)) / Math.Pow(10, NavMenu.rounding + 1)) </td>}
+            <td style="text-align:center">@(Math.Round((point / Table.matrixListStatic.Last().NombrePoints) * Math.Pow(10, Math.Max(3, NavMenu.rounding))) / Math.Pow(10, Math.Max(3, NavMenu.rounding))) </td>
+}
                         </tr>
                     </tbody>
                 </table>
 
-                                <h2>Nombre de points: @matrice.NombrePoints</h2>}
+                                <h2>Nombre de points: @matrice.NombrePoints</h2>
+}
 
 @code { private MatriceR matrice;
 
-            protected override async Task OnInitializedAsync()
-            {
-                matrice = Table.matrixListStatic.Last();
-            }
-    }
+    protected override async Task OnInitializedAsync()
+    {
+        matrice = Table.matrixListStatic.Last();
+    } }
